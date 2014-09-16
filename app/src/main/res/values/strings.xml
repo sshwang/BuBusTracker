@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">BuBusTracker</string>
+    <string name="title_activity_maps">BuBusMap</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="red">#CC0000</string>
+    <string name="alert_image_content_description">Alert Image</string>
+
+</resources>
