@@ -2,16 +2,21 @@ package com.bubus.steveh.bubustracker;
 
 import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
-//import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBar;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.os.Handler;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
+import android.graphics.Point;
 import android.app.AlertDialog;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuInflater;
-import android.app.ActionBar;
+//import android.app.ActionBar;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.Color;
 import android.content.Context;
@@ -20,6 +25,7 @@ import android.content.DialogInterface;
 
 
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -56,7 +62,7 @@ import android.widget.Toast;
 import java.lang.Runnable;
 
 
-public class MapsActivity extends FragmentActivity implements GoogleMap.OnMarkerClickListener, GoogleMap.OnInfoWindowClickListener{
+public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarkerClickListener, GoogleMap.OnInfoWindowClickListener{
     public static final String PREFS_NAME = "MyPrefsFile";
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private MenuItem refresh;
@@ -91,7 +97,8 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMarker
         mbtaData = settings.getBoolean("mbtaData", false);
         mTimer = new Timer();
         setContentView(R.layout.activity_maps);
-        ActionBar bar = getActionBar();
+        //ActionBar bar = getActionBar();
+        ActionBar bar = getSupportActionBar();
         bar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#CC0000")));
         setUpMapIfNeeded();
         refreshMapRunnable.run();
@@ -150,7 +157,7 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMarker
         editor.putBoolean("mbtaData", mbtaData);
         editor.commit();
 
-        //finish();
+        finish();
     }
     @Override
     public void onDestroy(){
@@ -163,8 +170,8 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMarker
         editor.putBoolean("autoRefresh", false);
         editor.putBoolean("mbtaData", false);
         editor.commit();
-        mTimerTask.cancel();
-        finish();
+        //mTimerTask.cancel();
+        //finish();
     }
 
     @Override
@@ -426,7 +433,7 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMarker
                 .title("CFA")
                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_circle_icon_256)));
         Marker Stuvi2 = mMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.353219,-71.118085))
+                .position(new LatLng(42.351819,-71.118085))
                 .title("Stuvi 2")
                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_circle_icon_256)));
         Marker AmorySt = mMap.addMarker(new MarkerOptions()
@@ -611,6 +618,9 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMarker
                         Date now = new Date();
                         String minToArrival = getETA(now, estimatedArrivalDate);
                         //existingMarker.setPosition(newLatLng);
+                        //animateMarker(existingMarker, latlng, false);
+
+
                         existingMarker.remove();
                         Marker m = mMap.addMarker(new MarkerOptions()
                                 .position(latlng)
@@ -621,14 +631,18 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMarker
                         mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
                         busHashMap.remove(existingMarker);
                         busHashMap.put(m, b);
+
                     } else {
-                        existingMarker.remove();
+
                         Marker m = mMap.addMarker(new MarkerOptions()
                                 .position(new LatLng(lat, lng))
                                 .title("No Schedule Available")
                                 .snippet(busType)
                                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_location_icon_256_yellow)));
                         //mMap.addMarker(m);
+                        //animateMarker(existingMarker, latlng, false);
+
+                        existingMarker.remove();
                         newMarkerHashMap.put(b, m);
                         mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
                         busHashMap.remove(existingMarker);
@@ -701,8 +715,8 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMarker
             oldMarkerHashMap = params[0];
             InputStream inputStream = null;
             String result = "";
-            String url = "http://realtime.mbta.com/developer/api/v2/vehiclesbyroute?api_key=wX9NwuHnZU2ToO7GmGR9uw&route=57&format=json";
-            String url57A = "http://realtime.mbta.com/developer/api/v2/vehiclesbyroute?api_key=wX9NwuHnZU2ToO7GmGR9uw&route=57&format=json";
+            String url = "http://realtime.mbta.com/developer/api/v2/vehiclesbyroute?api_key=iWPz9v7U3kORKZtdOjRsmw&route=57&format=json";
+            String url57A = "http://realtime.mbta.com/developer/api/v2/vehiclesbyroute?api_key=iWPz9v7U3kORKZtdOjRsmw&route=57&format=json";
             try {
                 HttpClient client = new DefaultHttpClient();
                 HttpGet httpGet = new HttpGet(url);
@@ -811,6 +825,8 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMarker
                             .position(latlng)
                             .title(b.getTrip_headsign())
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_location_icon_256_green)));
+//                    animateMarker(existingMarker, latlng, false);
+
                     newMarkerHashMap.put(b, m);
                     mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
                     mbtaBusHashMap.remove(existingMarker);
@@ -836,6 +852,41 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMarker
         }
     }
 
+    public void animateMarker(final Marker marker, final LatLng toPosition,
+                              final boolean hideMarker) {
+        final Handler handler = new Handler();
+        final long start = SystemClock.uptimeMillis();
+        Projection proj = mMap.getProjection();
+        Point startPoint = proj.toScreenLocation(marker.getPosition());
+        final LatLng startLatLng = proj.fromScreenLocation(startPoint);
+        final long duration = 500;
 
+        final Interpolator interpolator = new LinearInterpolator();
+
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                long elapsed = SystemClock.uptimeMillis() - start;
+                float t = interpolator.getInterpolation((float) elapsed
+                        / duration);
+                double lng = t * toPosition.longitude + (1 - t)
+                        * startLatLng.longitude;
+                double lat = t * toPosition.latitude + (1 - t)
+                        * startLatLng.latitude;
+                marker.setPosition(new LatLng(lat, lng));
+
+                if (t < 1.0) {
+                    // Post again 16ms later.
+                    handler.postDelayed(this, 16);
+                } else {
+                    if (hideMarker) {
+                        marker.setVisible(false);
+                    } else {
+                        marker.setVisible(true);
+                    }
+                }
+            }
+        });
+    }
 
 }

@@ -98,8 +98,9 @@ public class Stop implements Comparable<Stop>{
     public static Date convertStringToDate(String input)  {
         Date d = new Date();
         try {
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'-04:00'");
-            d = formatter.parse(input);
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'-05:00'");
+            SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ");
+            d = formatter2.parse(input);
             Integer i = 0;
         } catch (Exception e) {
             e.printStackTrace();

@@ -19,6 +19,7 @@ public class Bus {
     private String BusType;
     private Boolean hasStops = false;
     private String minTimeToNextStop;
+    private String generalHeading;
 
     public String getId() {
         return this.id;
@@ -29,6 +30,7 @@ public class Bus {
     public String getLat() {
         return this.lat;
     }
+    public String getGeneralHeading() { return this.generalHeading; }
     public Integer getNumBuses() {
         return this.numBuses;
     }
@@ -92,6 +94,7 @@ public class Bus {
             b.lng = jsonObject.getString("lng");
             b.lat = jsonObject.getString("lat");
             b.timestamp = jsonObject.getString("timestamp");
+            b.generalHeading = jsonObject.getString("general_heading");
             if (jsonObject.has("arrival_estimates")) {
                 JSONArray stops = jsonObject.getJSONArray("arrival_estimates");
                 ArrayList myStopArray = s.fromJsonArray(stops);
