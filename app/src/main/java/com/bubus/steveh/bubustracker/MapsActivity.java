@@ -12,6 +12,7 @@ import android.view.MenuItem;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.graphics.Point;
+import android.location.Location;
 import android.app.AlertDialog;
 import android.view.View;
 import android.view.Menu;
@@ -287,7 +288,7 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarke
             }
 
             if (autoRefresh == true) {
-                handler.postDelayed(this, 10000);
+                handler.postDelayed(this, 7000);
                 //Toast.makeText(getApplicationContext(), "auotrefresh=true", Toast.LENGTH_SHORT).show();
 
             } else {
@@ -305,6 +306,7 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarke
         addBUStops();
         addMBTAStops();
         mMap.setMyLocationEnabled(true);
+        Location myLocation = mMap.getMyLocation();
         mMap.setOnInfoWindowClickListener(new OnInfoWindowClickListener() {
 
             @Override
@@ -419,55 +421,55 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarke
         Marker MylesStandish = mMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.349536,-71.094530))
                 .title("Myles Standish")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_circle_icon_256)));
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
         Marker SilberWay = mMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.349453,-71.100748))
                 .title("Silber Way")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_circle_icon_256)));
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
         Marker MarshPlaza = mMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.350131,-71.106085))
+                .position(new LatLng(42.350181,-71.106085))
                 .title("Marsh Plaza")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_circle_icon_256)));
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
         Marker CFA = mMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.351091,-71.114019))
+                .position(new LatLng(42.351191,-71.114019))
                 .title("CFA")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_circle_icon_256)));
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
         Marker Stuvi2 = mMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.351819,-71.118085))
                 .title("Stuvi 2")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_circle_icon_256)));
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
         Marker AmorySt = mMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.350484,-71.113654))
+                .position(new LatLng(42.350354,-71.113654))
                 .title("Amory St")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_circle_icon_256)));
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
         Marker StMarysSt = mMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.349683,-71.106310))
+                .position(new LatLng(42.349553,-71.106310))
                 .title("St Mary's St")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_circle_icon_256)));
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
         Marker BlanfordSt = mMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.348902,-71.100270))
+                .position(new LatLng(42.348802,-71.100170))
                 .title("Blanford St")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_circle_icon_256)));
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
         Marker Kenmore = mMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.348585,-71.095490))
                 .title("Kenmore")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_circle_icon_256)));
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
         Marker AlbanySt = mMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.335132,-71.070798))
                 .title("Albany St")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_circle_icon_256)));
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
         Marker HuntingtonAve1 = mMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.342348,-71.084756))
                 .title("Huntington Ave Outbound")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_circle_icon_256)));
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
         Marker HuntingtonAve2 = mMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.342336,-71.084150))
                 .title("Huntington Ave Inbound")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_circle_icon_256)));
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
         Marker DanielsonHall = mMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.350876,-71.089718))
                 .title("Danielson Hall")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_circle_icon_256)));
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
 
         //mMap.clear();
 
@@ -601,6 +603,9 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarke
                 LatLng latlng = new LatLng(lat, lng);
                 String busType = b.getBusType();
                 String busId = b.getId();
+                String busGenHead = b.getGeneralHeading();
+                String busIcon = "bus421"+busGenHead+"degrees";
+                int resId = getResources().getIdentifier(busIcon,"drawable",getPackageName());
                 for (Map.Entry<Bus, Marker> entry: oldMarkerHashMap.entrySet()) {
                     Bus key = entry.getKey();
                     //iterate through oldMarkerHashMap to find bus with same id
@@ -626,7 +631,7 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarke
                                 .position(latlng)
                                 .snippet(minToArrival)
                                 .title("Next Stop: " + nextStop.getStopName())
-                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_location_icon_256)));
+                                .icon(BitmapDescriptorFactory.fromResource(resId)));
                         newMarkerHashMap.put(b, m);
                         mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
                         busHashMap.remove(existingMarker);
@@ -638,7 +643,7 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarke
                                 .position(new LatLng(lat, lng))
                                 .title("No Schedule Available")
                                 .snippet(busType)
-                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_location_icon_256_yellow)));
+                                .icon(BitmapDescriptorFactory.fromResource(resId)));
                         //mMap.addMarker(m);
                         //animateMarker(existingMarker, latlng, false);
 
@@ -658,7 +663,7 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarke
                                 .position(latlng)
                                 .snippet(minToArrival)
                                 .title("Next Stop: " + nextStop.getStopName())
-                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_location_icon_256)));
+                                .icon(BitmapDescriptorFactory.fromResource(resId)));
                         newMarkerHashMap.put(b, m);
                         busHashMap.put(m, b);
                     } else {
@@ -666,7 +671,7 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarke
                                 .position(latlng)
                                 .title("No Schedule Available")
                                 .snippet(busType)
-                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_iconmonstr_location_icon_256_yellow)));
+                                .icon(BitmapDescriptorFactory.fromResource(resId)));
                         newMarkerHashMap.put(b, m);
                         busHashMap.put(m, b);
                     }
