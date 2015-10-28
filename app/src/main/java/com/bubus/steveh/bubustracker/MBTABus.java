@@ -42,9 +42,6 @@ public class MBTABus {
         return this.numMBTABuses;
     }
 
-
-
-
     public static MBTABus fromJsonObject(JSONObject jsonObject) {
         MBTABus mbtaBus = new MBTABus();
         try {
@@ -87,14 +84,3 @@ public class MBTABus {
 
 
 }
-
-/*
-"trip_id":"24534671",
-"trip_name":"12:21 pm from Kenmore Station Busway to Watertown Yard",
-"trip_headsign":"Watertown Yard via Brighton",
-"vehicle":{
-"vehicle_id":"y2281",
-"vehicle_lat":"42.3501625061035",
-"vehicle_lon":"-71.1698837280273",
-"vehicle_timestamp":"1410627034"
- */

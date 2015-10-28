@@ -26,6 +26,7 @@ import android.content.DialogInterface;
 
 
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
@@ -525,8 +526,6 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarke
 
         }
 
-
-
         protected HashMap<Bus, Marker> doInBackground(HashMap<Bus, Marker>... params) {
             // Some long-running task like downloading an image.
 
@@ -587,98 +586,98 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarke
             // with access to the result of the long running task
             //imageView.setImageBitmap(result);
             // Hide the progress bar
-            for (Object o : myBusArray) {
-                Boolean match = false;
-                Bus b = (Bus) o;
-                Float lat = 0.0f;
-                Float lng = 0.0f;
-                if (b.getLat().isEmpty()) {
-                    continue;
-                }
-                else {
-                    lat = Float.parseFloat(b.getLat());
-                    lng = Float.parseFloat(b.getLng());
-                }
-
-                LatLng latlng = new LatLng(lat, lng);
-                String busType = b.getBusType();
-                String busId = b.getId();
-                String busGenHead = b.getGeneralHeading();
-                String busIcon = "bus421"+busGenHead+"degrees";
-                int resId = getResources().getIdentifier(busIcon,"drawable",getPackageName());
-                for (Map.Entry<Bus, Marker> entry: oldMarkerHashMap.entrySet()) {
-                    Bus key = entry.getKey();
-                    //iterate through oldMarkerHashMap to find bus with same id
-                    String keyId = key.getId();
-                    if (keyId == busId) {
-                        match = true;
-                        break;
-                    }
-                }
-                if (match == true) { ///EXISTING MARKER
-                    Marker existingMarker = oldMarkerHashMap.get(b);
-                    if (b.getHasStops()) {
-                        Stop nextStop = b.getNextStop();
-                        Date estimatedArrivalDate = nextStop.getEstimatedArrivalDate();
-                        Date now = new Date();
-                        String minToArrival = getETA(now, estimatedArrivalDate);
-                        //existingMarker.setPosition(newLatLng);
-                        //animateMarker(existingMarker, latlng, false);
-
-
-                        existingMarker.remove();
-                        Marker m = mMap.addMarker(new MarkerOptions()
-                                .position(latlng)
-                                .snippet(minToArrival)
-                                .title("Next Stop: " + nextStop.getStopName())
-                                .icon(BitmapDescriptorFactory.fromResource(resId)));
-                        newMarkerHashMap.put(b, m);
-                        mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
-                        busHashMap.remove(existingMarker);
-                        busHashMap.put(m, b);
-
+            if (!myBusArray.isEmpty()) {
+                for (Object o : myBusArray) {
+                    Boolean match = false;
+                    Bus b = (Bus) o;
+                    Float lat = 0.0f;
+                    Float lng = 0.0f;
+                    if (b.getLat().isEmpty()) {
+                        continue;
                     } else {
-
-                        Marker m = mMap.addMarker(new MarkerOptions()
-                                .position(new LatLng(lat, lng))
-                                .title("No Schedule Available")
-                                .snippet(busType)
-                                .icon(BitmapDescriptorFactory.fromResource(resId)));
-                        //mMap.addMarker(m);
-                        //animateMarker(existingMarker, latlng, false);
-
-                        existingMarker.remove();
-                        newMarkerHashMap.put(b, m);
-                        mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
-                        busHashMap.remove(existingMarker);
-                        busHashMap.put(m, b);
+                        lat = Float.parseFloat(b.getLat());
+                        lng = Float.parseFloat(b.getLng());
                     }
-                } else {
-                    if (b.getHasStops()) { //has schedule
-                        Stop nextStop = b.getNextStop();
-                        Date estimatedArrivalDate = nextStop.getEstimatedArrivalDate();
-                        Date now = new Date();
-                        String minToArrival = getETA(now, estimatedArrivalDate);
-                        Marker m = mMap.addMarker(new MarkerOptions()
-                                .position(latlng)
-                                .snippet(minToArrival)
-                                .title("Next Stop: " + nextStop.getStopName())
-                                .icon(BitmapDescriptorFactory.fromResource(resId)));
-                        newMarkerHashMap.put(b, m);
-                        busHashMap.put(m, b);
+
+                    LatLng latlng = new LatLng(lat, lng);
+                    String busType = b.getBusType();
+                    String busId = b.getId();
+                    String busGenHead = b.getGeneralHeading();
+                    String busIcon = "bus421" + busGenHead + "degrees";
+                    int resId = getResources().getIdentifier(busIcon, "drawable", getPackageName());
+                    for (Map.Entry<Bus, Marker> entry : oldMarkerHashMap.entrySet()) {
+                        Bus key = entry.getKey();
+                        //iterate through oldMarkerHashMap to find bus with same id
+                        String keyId = key.getId();
+                        if (keyId == busId) {
+                            match = true;
+                            break;
+                        }
+                    }
+                    if (match == true) { ///EXISTING MARKER
+                        Marker existingMarker = oldMarkerHashMap.get(b);
+                        if (b.getHasStops()) {
+                            Stop nextStop = b.getNextStop();
+                            Date estimatedArrivalDate = nextStop.getEstimatedArrivalDate();
+                            Date now = new Date();
+                            String minToArrival = getETA(now, estimatedArrivalDate);
+                            //existingMarker.setPosition(newLatLng);
+                            //animateMarker(existingMarker, latlng, false);
+
+
+                            existingMarker.remove();
+                            Marker m = mMap.addMarker(new MarkerOptions()
+                                    .position(latlng)
+                                    .snippet(minToArrival)
+                                    .title("Next Stop: " + nextStop.getStopName())
+                                    .icon(BitmapDescriptorFactory.fromResource(resId)));
+                            newMarkerHashMap.put(b, m);
+                            mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
+                            busHashMap.remove(existingMarker);
+                            busHashMap.put(m, b);
+
+                        } else {
+
+                            Marker m = mMap.addMarker(new MarkerOptions()
+                                    .position(new LatLng(lat, lng))
+                                    .title("No Schedule Available")
+                                    .snippet(busType)
+                                    .icon(BitmapDescriptorFactory.fromResource(resId)));
+                            //mMap.addMarker(m);
+                            //animateMarker(existingMarker, latlng, false);
+
+                            existingMarker.remove();
+                            newMarkerHashMap.put(b, m);
+                            mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
+                            busHashMap.remove(existingMarker);
+                            busHashMap.put(m, b);
+                        }
                     } else {
-                        Marker m = mMap.addMarker(new MarkerOptions()
-                                .position(latlng)
-                                .title("No Schedule Available")
-                                .snippet(busType)
-                                .icon(BitmapDescriptorFactory.fromResource(resId)));
-                        newMarkerHashMap.put(b, m);
-                        busHashMap.put(m, b);
+                        if (b.getHasStops()) { //has schedule
+                            Stop nextStop = b.getNextStop();
+                            Date estimatedArrivalDate = nextStop.getEstimatedArrivalDate();
+                            Date now = new Date();
+                            String minToArrival = getETA(now, estimatedArrivalDate);
+                            Marker m = mMap.addMarker(new MarkerOptions()
+                                    .position(latlng)
+                                    .snippet(minToArrival)
+                                    .title("Next Stop: " + nextStop.getStopName())
+                                    .icon(BitmapDescriptorFactory.fromResource(resId)));
+                            newMarkerHashMap.put(b, m);
+                            busHashMap.put(m, b);
+                        } else {
+                            Marker m = mMap.addMarker(new MarkerOptions()
+                                    .position(latlng)
+                                    .title("No Schedule Available")
+                                    .snippet(busType)
+                                    .icon(BitmapDescriptorFactory.fromResource(resId)));
+                            newMarkerHashMap.put(b, m);
+                            busHashMap.put(m, b);
+                        }
                     }
+                    match = false;
+
                 }
-
-                match = false;
-
             }
             for (Map.Entry<Bus, Marker> entry: oldMarkerHashMap.entrySet()) {
                 //iterate through oldMarkerHashMap to find bus with same id
