@@ -6,10 +6,10 @@ android {
 
     defaultConfig {
         applicationId "com.bubus.steveh.bubustracker"
-        minSdkVersion 18
+        minSdkVersion 11
         targetSdkVersion 19
-        versionCode 13
-        versionName "1.5"
+        versionCode 15
+        versionName "1.52"
     }
     buildTypes {
         release {

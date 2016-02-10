@@ -82,7 +82,6 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarke
     private HashMap<MBTABus, Marker> mbtaIDHashMap = new HashMap<MBTABus, Marker>();
 
 
-
     private ArrayList<Bus> currentBuses = new ArrayList<Bus>();
 
 
@@ -586,7 +585,7 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarke
             // with access to the result of the long running task
             //imageView.setImageBitmap(result);
             // Hide the progress bar
-            if (!myBusArray.isEmpty()) {
+            if (myBusArray !=null && !myBusArray.isEmpty()) {
                 for (Object o : myBusArray) {
                     Boolean match = false;
                     Bus b = (Bus) o;
