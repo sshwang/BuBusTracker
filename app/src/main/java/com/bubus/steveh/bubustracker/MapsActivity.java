@@ -25,6 +25,7 @@ import android.content.SharedPreferences;
 import android.content.DialogInterface;
 
 
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.Projection;
@@ -64,7 +65,7 @@ import android.widget.Toast;
 import java.lang.Runnable;
 
 
-public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarkerClickListener, GoogleMap.OnInfoWindowClickListener{
+public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMyLocationChangeListener, GoogleMap.OnInfoWindowClickListener{
     public static final String PREFS_NAME = "MyPrefsFile";
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private MenuItem refresh;
@@ -84,10 +85,7 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarke
 
     private ArrayList<Bus> currentBuses = new ArrayList<Bus>();
 
-
     final Context context = this;
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -302,7 +300,8 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarke
 
     private void setUpMap() {
         LatLng BOSTONU = new LatLng(42.350630, -71.094332);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(BOSTONU, 13));
+        //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(BOSTONU, 13));
+        mMap.setOnMyLocationChangeListener(this);
         addBUStops();
         addMBTAStops();
         mMap.setMyLocationEnabled(true);
@@ -890,6 +889,17 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarke
                 }
             }
         });
+    }
+    @Override
+    public void onMyLocationChange(Location location) {
+        //CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 15);
+        if (location != null) {
+            LatLng myLocation = new LatLng(location.getLatitude(),
+                    location.getLongitude());
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(myLocation, 15));
+
+        }
+        mMap.setOnMyLocationChangeListener(null);
     }
 
 }
