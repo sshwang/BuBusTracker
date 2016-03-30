@@ -11,6 +11,7 @@ import android.support.v7.app.ActionBar;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.location.Location;
 import android.view.Menu;
@@ -26,6 +27,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -51,7 +53,7 @@ import java.util.Map;
 import java.lang.Runnable;
 
 
-public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMyLocationChangeListener, GoogleMap.OnInfoWindowClickListener{
+public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMyLocationChangeListener, GoogleMap.OnInfoWindowClickListener{
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private HashMap<Marker,Bus> busHashMap = new HashMap<Marker, Bus>();
     private int interval = 5000;
@@ -63,8 +65,7 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarke
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        ActionBar bar = getSupportActionBar();
-        bar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#CC0000"))); // red color for actionbar
+        //bar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#CC0000"))); // red color for actionbar
         verifyPermissions(this); // android 6.0+ permissions
         setUpMapIfNeeded(); // start setting up map
 
@@ -173,7 +174,7 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMarke
         // Do a null check to confirm that we have not already instantiated the map.
         if (mMap == null) {
             // Try to obtain the map from the SupportMapFragment.
-            mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
+            mMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map))
                     .getMap();
             // Check if we were successful in obtaining the map.
             if (mMap != null) {
