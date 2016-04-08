@@ -55,7 +55,8 @@ import java.lang.Runnable;
 
 public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMyLocationChangeListener, GoogleMap.OnInfoWindowClickListener{
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
-    private HashMap<Marker,Bus> busHashMap = new HashMap<Marker, Bus>();
+    private HashMap<Integer, Bus> busIDtoBus = new HashMap<Integer, Bus>();
+    private HashMap<Integer, Marker> busIDtoMarker = new HashMap<Integer, Marker>();
     private int interval = 5000;
     private Handler mHandler;
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 1;
@@ -75,12 +76,12 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
     Runnable mStatusChecker = new Runnable() {
         @Override
         public void run() {
-            getBusInfoAsync();
+            getBusInfo();
             mHandler.postDelayed(mStatusChecker, interval);
         }
     };
 
-    private void getBusInfoAsync() {
+    private void getBusInfo() {
         // Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(this);
         String url = "http://www.bu.edu/bumobile/rpc/bus/livebus.json.php";
@@ -90,7 +91,6 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        // Display the first 500 characters of the response string.
                         Integer n = 0; // response should be here in successful
                         parseBusInfo(response);
                     }
@@ -119,6 +119,16 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
                 JSONArray buses = resultSet.getJSONArray("Result");
                 Bus myBuses = new Bus();
                 busArray = myBuses.fromJsonArray(buses); // parsing done. busArray is array of Bus objects
+
+                for (Bus b: busArray) {
+                    if (!busIDtoBus.containsKey(b.getId())) { // if this is a new bus
+                        busIDtoBus.put(b.getId(), b); // put into id to bus hashmap
+                    }
+                    //(Bus) b.getLatLng();
+//                    mMap.addMarker(new MarkerOptions()
+//                    .position(b.getLatLng())
+//                    .title("whatever"));
+                }
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -271,190 +281,6 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
         DateFormat dateFormat = new SimpleDateFormat("h:mm");
         String s = dateFormat.format(estimateArrivalDate);
         return s;
-    }
-
-    public class RefreshBUMapAsync extends AsyncTask<HashMap<Bus, Marker>, String, HashMap<Bus, Marker>> {
-        private JSONObject oldJSON;
-        private HashMap<Bus, Marker> newMarkerHashMap = new HashMap<Bus, Marker>();
-        private HashMap<Bus, Marker> oldMarkerHashMap = new HashMap<Bus, Marker>();
-        private ArrayList<Bus> myBusArray;
-
-        protected void onPreExecute() {
-            // Runs on the UI thread before doInBackground
-            // Good for toggling visibility of a progress indicator
-            super.onPreExecute();
-        }
-
-        private String convertInputStreamToString(InputStream inputStream) throws IOException {
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            String line = "";
-            String result = "";
-            while ((line = bufferedReader.readLine()) != null)
-                result += line;
-            inputStream.close();
-            return result;
-
-        }
-
-        protected HashMap<Bus, Marker> doInBackground(HashMap<Bus, Marker>... params) {
-            // Some long-running task like downloading an image.
-
-            oldMarkerHashMap = params[0];
-            InputStream inputStream = null;
-            String result = "";
-            String url = "http://www.bu.edu/bumobile/rpc/bus/livebus.json.php";
-            try {
-//                HttpClient client = new DefaultHttpClient();
-//                HttpGet httpGet = new HttpGet(url);
-//                HttpResponse httpResponse = client.execute(httpGet);
-//                inputStream = httpResponse.getEntity().getContent();
-                if (inputStream != null)
-                    result = convertInputStreamToString(inputStream);
-                else {
-                    result = "Did not work!";
-                    //DO NOTHING
-                }
-                JSONObject jsonObject = new JSONObject(result);
-                if (jsonObject.equals(oldJSON)) {
-                    result = oldJSON.toString();
-                    //DO NOTHING
-                } else if (jsonObject.length() == 0) {
-                    result = oldJSON.toString();
-                    //DO NOTHING
-                } else {
-                    oldJSON = jsonObject;
-                    String totalResultsAvailable = jsonObject.getString("totalResultsAvailable");
-                    String isMissingResults = jsonObject.getString("isMissingResults");
-                    if (totalResultsAvailable == "0") {
-                        result = oldJSON.toString();
-                    } else if (isMissingResults == "1") {
-                        result = oldJSON.toString();
-                    } else {
-                        JSONObject resultSet = jsonObject.getJSONObject("ResultSet");
-                        JSONArray buses = resultSet.getJSONArray("Result");
-                        result = buses.toString();
-                    }
-
-
-                }
-                JSONArray buses = new JSONArray(result);
-                Bus myBuses = new Bus();
-                myBusArray = myBuses.fromJsonArray(buses);
-
-
-            } catch (Exception e) {
-                String msg = (e.getMessage() == null) ? "No data!" : e.getMessage();
-                Log.i("Cannot get data", msg);
-            }
-            return newMarkerHashMap;
-        }
-
-        @Override
-        protected void onPostExecute(HashMap<Bus, Marker> result) {
-            // This method is executed in the UIThread
-            // with access to the result of the long running task
-            //imageView.setImageBitmap(result);
-            // Hide the progress bar
-            if (myBusArray !=null && !myBusArray.isEmpty()) {
-                for (Object o : myBusArray) {
-                    Boolean match = false;
-                    Bus b = (Bus) o;
-                    Float lat = 0.0f;
-                    Float lng = 0.0f;
-                    if (b.getLat().isEmpty()) {
-                        continue;
-                    } else {
-                        lat = Float.parseFloat(b.getLat());
-                        lng = Float.parseFloat(b.getLng());
-                    }
-
-                    LatLng latlng = new LatLng(lat, lng);
-                    String busType = b.getBusType();
-                    String busId = b.getId();
-                    String busGenHead = b.getGeneralHeading();
-                    String busIcon = "bus421" + busGenHead + "degrees";
-                    int resId = getResources().getIdentifier(busIcon, "drawable", getPackageName());
-                    for (Map.Entry<Bus, Marker> entry : oldMarkerHashMap.entrySet()) {
-                        Bus key = entry.getKey();
-                        //iterate through oldMarkerHashMap to find bus with same id
-                        String keyId = key.getId();
-                        if (keyId == busId) {
-                            match = true;
-                            break;
-                        }
-                    }
-                    if (match == true) { ///EXISTING MARKER
-                        Marker existingMarker = oldMarkerHashMap.get(b);
-                        if (b.getHasStops()) {
-                            Stop nextStop = b.getNextStop();
-                            Date estimatedArrivalDate = nextStop.getEstimatedArrivalDate();
-                            Date now = new Date();
-                            String minToArrival = getETA(now, estimatedArrivalDate);
-                            //existingMarker.setPosition(newLatLng);
-                            //animateMarker(existingMarker, latlng, false);
-
-
-                            existingMarker.remove();
-                            Marker m = mMap.addMarker(new MarkerOptions()
-                                    .position(latlng)
-                                    .snippet(minToArrival)
-                                    .title("Next Stop: " + nextStop.getStopName())
-                                    .icon(BitmapDescriptorFactory.fromResource(resId)));
-                            newMarkerHashMap.put(b, m);
-                            mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
-                            busHashMap.remove(existingMarker);
-                            busHashMap.put(m, b);
-
-                        } else {
-
-                            Marker m = mMap.addMarker(new MarkerOptions()
-                                    .position(new LatLng(lat, lng))
-                                    .title("No Schedule Available")
-                                    .snippet(busType)
-                                    .icon(BitmapDescriptorFactory.fromResource(resId)));
-                            //mMap.addMarker(m);
-                            //animateMarker(existingMarker, latlng, false);
-
-                            existingMarker.remove();
-                            newMarkerHashMap.put(b, m);
-                            mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
-                            busHashMap.remove(existingMarker);
-                            busHashMap.put(m, b);
-                        }
-                    } else {
-                        if (b.getHasStops()) { //has schedule
-                            Stop nextStop = b.getNextStop();
-                            Date estimatedArrivalDate = nextStop.getEstimatedArrivalDate();
-                            Date now = new Date();
-                            String minToArrival = getETA(now, estimatedArrivalDate);
-                            Marker m = mMap.addMarker(new MarkerOptions()
-                                    .position(latlng)
-                                    .snippet(minToArrival)
-                                    .title("Next Stop: " + nextStop.getStopName())
-                                    .icon(BitmapDescriptorFactory.fromResource(resId)));
-                            newMarkerHashMap.put(b, m);
-                            busHashMap.put(m, b);
-                        } else {
-                            Marker m = mMap.addMarker(new MarkerOptions()
-                                    .position(latlng)
-                                    .title("No Schedule Available")
-                                    .snippet(busType)
-                                    .icon(BitmapDescriptorFactory.fromResource(resId)));
-                            newMarkerHashMap.put(b, m);
-                            busHashMap.put(m, b);
-                        }
-                    }
-                    match = false;
-
-                }
-            }
-            for (Map.Entry<Bus, Marker> entry: oldMarkerHashMap.entrySet()) {
-                //iterate through oldMarkerHashMap to find bus with same id
-                Bus key = entry.getKey();
-                oldMarkerHashMap.get(key).remove();
-            }
-            super.onPostExecute(newMarkerHashMap);
-        }
     }
 
     // Zoom to current location
