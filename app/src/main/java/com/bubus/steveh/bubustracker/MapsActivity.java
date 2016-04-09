@@ -1,23 +1,20 @@
 package com.bubus.steveh.bubustracker;
 
 import android.Manifest;
+import android.animation.ObjectAnimator;
+import android.animation.TypeEvaluator;
 import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.ActionBar;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.location.Location;
+import android.util.Property;
 import android.view.Menu;
 import android.view.MenuInflater;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.Color;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -40,16 +37,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Map;
 import java.lang.Runnable;
 
 
@@ -60,13 +52,16 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
     private int interval = 5000;
     private Handler mHandler;
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 1;
+    private LatLngInterpolator mLatLngInterpolator;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        //bar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#CC0000"))); // red color for actionbar
+        mLatLngInterpolator = new LatLngInterpolator.Linear();
+
         verifyPermissions(this); // android 6.0+ permissions
         setUpMapIfNeeded(); // start setting up map
 
@@ -121,14 +116,25 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
                 busArray = myBuses.fromJsonArray(buses); // parsing done. busArray is array of Bus objects
 
                 for (Bus b: busArray) {
-                    if (!busIDtoBus.containsKey(b.getId())) { // if this is a new bus
-                        busIDtoBus.put(b.getId(), b); // put into id to bus hashmap
+                    Integer id = b.getId();
+                    if (!busIDtoBus.containsKey(id)) { // if this is a new bus
+                        busIDtoBus.put(id, b); // put into id to bus hashmap
+                        if (!busIDtoMarker.containsKey(id)) { // ensure there is also no marker for that bus id
+                            Marker m = mMap.addMarker(new MarkerOptions()
+                                    .position(b.getLatLng())
+                                    .title(id.toString())); // create a marker, plot, and add it to the marker hashmap
+                            busIDtoMarker.put(b.getId(), m);
+                        }
                     }
-                    //(Bus) b.getLatLng();
-//                    mMap.addMarker(new MarkerOptions()
-//                    .position(b.getLatLng())
-//                    .title("whatever"));
+                    else { // if this bus already exists
+                        animateMarkerToICS(busIDtoMarker.get(id), b.getLatLng(),mLatLngInterpolator);// get the marker and animate it
+                    }
                 }
+                for (Bus b: busArray) {
+
+                }
+
+
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -326,6 +332,19 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
                 return;
             }
         }
+    }
+
+    public void animateMarkerToICS(Marker marker, LatLng finalPosition, final LatLngInterpolator latLngInterpolator) {
+        TypeEvaluator<LatLng> typeEvaluator = new TypeEvaluator<LatLng>() {
+            @Override
+            public LatLng evaluate(float fraction, LatLng startValue, LatLng endValue) {
+                return latLngInterpolator.interpolate(fraction, startValue, endValue);
+            }
+        };
+        Property<Marker, LatLng> property = Property.of(Marker.class, LatLng.class, "position");
+        ObjectAnimator animator = ObjectAnimator.ofObject(marker, property, typeEvaluator, finalPosition);
+        animator.setDuration(3000);
+        animator.start();
     }
 
 
