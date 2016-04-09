@@ -117,16 +117,22 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
 
                 for (Bus b: busArray) {
                     Integer id = b.getId();
+                    Integer busGenHead = b.getGeneralHeading();
+                    String busIcon = "bus421" + busGenHead + "degrees";
+                    int resId = getResources().getIdentifier(busIcon, "drawable", getPackageName());
+
                     if (!busIDtoBus.containsKey(id)) { // if this is a new bus
                         busIDtoBus.put(id, b); // put into id to bus hashmap
                         if (!busIDtoMarker.containsKey(id)) { // ensure there is also no marker for that bus id
                             Marker m = mMap.addMarker(new MarkerOptions()
                                     .position(b.getLatLng())
+                                    .icon(BitmapDescriptorFactory.fromResource(resId))
                                     .title(id.toString())); // create a marker, plot, and add it to the marker hashmap
                             busIDtoMarker.put(b.getId(), m);
                         }
                     }
                     else { // if this bus already exists
+                        busIDtoMarker.get(id).setIcon(BitmapDescriptorFactory.fromResource(resId));
                         animateMarkerToICS(busIDtoMarker.get(id), b.getLatLng(),mLatLngInterpolator);// get the marker and animate it
                     }
                 }
