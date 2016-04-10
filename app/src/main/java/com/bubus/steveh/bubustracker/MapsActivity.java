@@ -119,7 +119,10 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
                     Integer id = b.getId();
                     Integer busGenHead = b.getGeneralHeading();
                     String busIcon = "bus421" + busGenHead + "degrees";
-                    int resId = getResources().getIdentifier(busIcon, "drawable", getPackageName());
+                    Date estimatedArrivalDate = b.getNextStop().getEstimatedArrivalDate();
+                    String minToArrival = getETA(estimatedArrivalDate);
+
+                    Integer resId = getResources().getIdentifier(busIcon, "drawable", getPackageName());
 
                     if (!busIDtoBus.containsKey(id)) { // if this is a new bus
                         busIDtoBus.put(id, b); // put into id to bus hashmap
@@ -127,13 +130,18 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
                             Marker m = mMap.addMarker(new MarkerOptions()
                                     .position(b.getLatLng())
                                     .icon(BitmapDescriptorFactory.fromResource(resId))
-                                    .title(id.toString())); // create a marker, plot, and add it to the marker hashmap
-                            busIDtoMarker.put(b.getId(), m);
+                                    .snippet(minToArrival)
+                                    .title(b.getNextStop().getStopName()));
+                            busIDtoMarker.put(id, m); // create a marker, plot, and add it to the marker hashmap
                         }
                     }
                     else { // if this bus already exists
-                        busIDtoMarker.get(id).setIcon(BitmapDescriptorFactory.fromResource(resId));
+                        Marker m = busIDtoMarker.get(id);
+                        m.setIcon(BitmapDescriptorFactory.fromResource(resId));
+                        m.setSnippet(minToArrival);
+                        m.setTitle(b.getNextStop().getStopName());
                         animateMarkerToICS(busIDtoMarker.get(id), b.getLatLng(),mLatLngInterpolator);// get the marker and animate it
+                        busIDtoMarker.put(id, m);
                     }
                 }
                 for (Bus b: busArray) {
@@ -276,7 +284,8 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
 
     }
 
-    private String getETA(Date now, Date estimatedArrivalDate){ //Estimated time to arrival
+    private String getETA(Date estimatedArrivalDate){ //Estimated time to arrival
+        Date now = new Date();
         String minutes;
         long milliseconds = estimatedArrivalDate.getTime()-now.getTime();
         long min = milliseconds / (60 * 1000) % 60;
