@@ -46,7 +46,12 @@ public class Bus {
         return this.stops;
     }
     public Stop getNextStop() {
-        return this.stops.get(0);
+        if (stops != null && !stops.isEmpty()) {
+            return this.stops.get(0);
+        }
+        else {
+            return null;
+        }
     }
     public String getBusType() {return  this.BusType; }
     public Boolean getHasStops() {return this.hasStops;}

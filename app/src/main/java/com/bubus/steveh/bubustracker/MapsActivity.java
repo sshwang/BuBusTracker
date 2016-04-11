@@ -119,8 +119,13 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
                     Integer id = b.getId();
                     Integer busGenHead = b.getGeneralHeading();
                     String busIcon = "bus421" + busGenHead + "degrees";
-                    Date estimatedArrivalDate = b.getNextStop().getEstimatedArrivalDate();
-                    String minToArrival = getETA(estimatedArrivalDate);
+                    String minToArrival = "Unavailable";
+                    String nextStop = "Unavailable";
+                    if (b.getNextStop() != null) {
+                        Date estimatedArrivalDate = b.getNextStop().getEstimatedArrivalDate();
+                        minToArrival = getETA(estimatedArrivalDate);
+                        nextStop = b.getNextStop().getStopName();
+                    }
 
                     Integer resId = getResources().getIdentifier(busIcon, "drawable", getPackageName());
 
@@ -131,7 +136,7 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
                                     .position(b.getLatLng())
                                     .icon(BitmapDescriptorFactory.fromResource(resId))
                                     .snippet(minToArrival)
-                                    .title(b.getNextStop().getStopName()));
+                                    .title(nextStop));
                             busIDtoMarker.put(id, m); // create a marker, plot, and add it to the marker hashmap
                         }
                     }
@@ -139,7 +144,7 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
                         Marker m = busIDtoMarker.get(id);
                         m.setIcon(BitmapDescriptorFactory.fromResource(resId));
                         m.setSnippet(minToArrival);
-                        m.setTitle(b.getNextStop().getStopName());
+                        m.setTitle(nextStop);
                         animateMarkerToICS(busIDtoMarker.get(id), b.getLatLng(),mLatLngInterpolator);// get the marker and animate it
                         busIDtoMarker.put(id, m);
                     }
