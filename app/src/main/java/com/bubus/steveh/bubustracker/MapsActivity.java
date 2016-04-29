@@ -45,7 +45,7 @@ import java.util.HashMap;
 import java.lang.Runnable;
 
 
-public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMyLocationChangeListener, GoogleMap.OnInfoWindowClickListener{
+public class MapsActivity extends Activity implements GoogleMap.OnMyLocationChangeListener, GoogleMap.OnInfoWindowClickListener{
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private HashMap<Integer, Bus> busIDtoBus = new HashMap<Integer, Bus>();
     private HashMap<Integer, Marker> busIDtoMarker = new HashMap<Integer, Marker>();
@@ -75,6 +75,13 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
             mHandler.postDelayed(mStatusChecker, interval);
         }
     };
+
+    @Override
+    public void onInfoWindowClick(Marker marker) {
+        Toast.makeText(getBaseContext(),
+                "Info Window clicked@" + marker.getId(),
+                Toast.LENGTH_SHORT).show();
+    }
 
     private void getBusInfo() {
         // Instantiate the RequestQueue.
@@ -169,15 +176,6 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
         return super.onCreateOptionsMenu(menu);
     }
 
-    @Override
-    public boolean onMarkerClick(final Marker marker) {
-
-//        if (marker.equals(myMarker))
-//        {
-//            //handle click here
-//        }
-        return true;
-    }
 
     @Override
     public void onResume() {
@@ -209,11 +207,11 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
         // Do a null check to confirm that we have not already instantiated the map.
         if (mMap == null) {
             // Try to obtain the map from the SupportMapFragment.
-            mMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map))
-                    .getMap();
+            mMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
             // Check if we were successful in obtaining the map.
             if (mMap != null) {
                 mMap.setOnMyLocationChangeListener(this);
+                mMap.setOnInfoWindowClickListener(this);
                 setUpMap();
             }
         }
@@ -281,13 +279,7 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
 
     }
 
-    @Override
-    public void onInfoWindowClick(Marker marker) {
-        Toast.makeText(getBaseContext(),
-                "Info Window clicked@" + marker.getId(),
-                Toast.LENGTH_SHORT).show();
 
-    }
 
     private String getETA(Date estimatedArrivalDate){ //Estimated time to arrival
         Date now = new Date();
