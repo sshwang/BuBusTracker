@@ -12,6 +12,7 @@ import android.support.v4.content.ContextCompat;
 import android.os.Bundle;
 import android.os.Handler;
 import android.location.Location;
+import android.support.v7.app.AlertDialog;
 import android.util.Property;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -31,6 +32,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.common.collect.HashBiMap;
 
 
 import org.json.JSONException;
@@ -43,12 +45,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.lang.Runnable;
+import java.util.Iterator;
 
 
 public class MapsActivity extends Activity implements GoogleMap.OnMyLocationChangeListener, GoogleMap.OnInfoWindowClickListener{
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private HashMap<Integer, Bus> busIDtoBus = new HashMap<Integer, Bus>();
-    private HashMap<Integer, Marker> busIDtoMarker = new HashMap<Integer, Marker>();
+    private HashBiMap<Integer, Marker> busIDandMarkerHashBiMap = HashBiMap.create();
     private int interval = 5000;
     private Handler mHandler;
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 1;
@@ -78,9 +81,39 @@ public class MapsActivity extends Activity implements GoogleMap.OnMyLocationChan
 
     @Override
     public void onInfoWindowClick(Marker marker) {
-        Toast.makeText(getBaseContext(),
-                "Info Window clicked@" + marker.getId(),
-                Toast.LENGTH_SHORT).show();
+        if (busIDandMarkerHashBiMap.containsValue(marker)) { // IF the marker is a bus
+            Integer busId = busIDandMarkerHashBiMap.inverse().get(marker);
+            Bus selectedBus = busIDtoBus.get(busId);
+
+            ArrayList<Stop> myStops = selectedBus.getStops();
+            if (myStops != null) {
+                Iterator<Stop> it = myStops.iterator();
+                String schedule = "";
+                Date now = new Date();
+                while (it.hasNext()) {
+                    Stop currentStop = it.next();
+                    schedule = schedule + getEAT(currentStop.getEstimatedArrivalDate()) + "    "+currentStop.getStopName() + "\n";
+                }
+                AlertDialog.Builder builder =
+                        new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle);
+                builder.setTitle(selectedBus.getBusType());
+                builder.setMessage(schedule);
+                builder.setPositiveButton("CLOSE", null);
+                builder.show();
+//                QustomDialogBuilder qustomDialogBuilder = new QustomDialogBuilder(this).
+//                        setTitle(selectedBus.getBusType()).
+//                        setTitleColor("#CC0000").
+//                        setDividerColor("#CC0000").
+//                        setMessage(schedule);
+//
+//                qustomDialogBuilder.show();
+
+            }
+
+        }
+        else { // IF the marker is a stop
+
+        }
     }
 
     private void getBusInfo() {
@@ -138,22 +171,22 @@ public class MapsActivity extends Activity implements GoogleMap.OnMyLocationChan
 
                     if (!busIDtoBus.containsKey(id)) { // if this is a new bus
                         busIDtoBus.put(id, b); // put into id to bus hashmap
-                        if (!busIDtoMarker.containsKey(id)) { // ensure there is also no marker for that bus id
+                        if (!busIDandMarkerHashBiMap.containsKey(id)) { // ensure there is also no marker for that bus id
                             Marker m = mMap.addMarker(new MarkerOptions()
                                     .position(b.getLatLng())
                                     .icon(BitmapDescriptorFactory.fromResource(resId))
                                     .snippet(minToArrival)
                                     .title(nextStop));
-                            busIDtoMarker.put(id, m); // create a marker, plot, and add it to the marker hashmap
+                            busIDandMarkerHashBiMap.put(id, m); // create a marker, plot, and add it to the marker hashmap
                         }
                     }
                     else { // if this bus already exists
-                        Marker m = busIDtoMarker.get(id);
+                        Marker m = busIDandMarkerHashBiMap.get(id);
                         m.setIcon(BitmapDescriptorFactory.fromResource(resId));
                         m.setSnippet(minToArrival);
                         m.setTitle(nextStop);
-                        animateMarkerToICS(busIDtoMarker.get(id), b.getLatLng(),mLatLngInterpolator);// get the marker and animate it
-                        busIDtoMarker.put(id, m);
+                        animateMarkerToICS(busIDandMarkerHashBiMap.get(id), b.getLatLng(),mLatLngInterpolator);// get the marker and animate it
+                        busIDandMarkerHashBiMap.put(id, m);
                     }
                 }
                 for (Bus b: busArray) {
