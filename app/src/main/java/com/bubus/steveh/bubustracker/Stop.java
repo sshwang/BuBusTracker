@@ -86,7 +86,7 @@ public class Stop implements Comparable<Stop>{
                     s.stopName = "Albany St";
                     break;
                 default:
-                    s.stopName = "Unknown Stop";
+                    s.stopName = "Time to Next Stop";
             }
         } catch (JSONException e) {
             e.printStackTrace();

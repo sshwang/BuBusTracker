@@ -4,7 +4,9 @@ import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.animation.TypeEvaluator;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -31,6 +33,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 
 import org.json.JSONException;
@@ -43,16 +47,20 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.lang.Runnable;
+import java.util.List;
 
 
 public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMyLocationChangeListener, GoogleMap.OnInfoWindowClickListener{
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private HashMap<Integer, Bus> busIDtoBus = new HashMap<Integer, Bus>();
     private HashMap<Integer, Marker> busIDtoMarker = new HashMap<Integer, Marker>();
-    private int interval = 5000;
+    private int interval = 100;
     private Handler mHandler;
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 1;
     private LatLngInterpolator mLatLngInterpolator;
+    private ArrayList<LatLng> points = null;
+    private PolylineOptions polyLineOptions = null;
+    private RequestQueue queue; // TODO make singleton for queue: http://developer.android.com/training/volley/requestqueue.html
 
 
     @Override
@@ -78,7 +86,7 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
 
     private void getBusInfo() {
         // Instantiate the RequestQueue.
-        RequestQueue queue = Volley.newRequestQueue(this);
+        queue = Volley.newRequestQueue(this);
         String url = "http://www.bu.edu/bumobile/rpc/bus/livebus.json.php";
 
         // Request a string response from the provided URL.
@@ -97,6 +105,7 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
         });
         // Add the request to the RequestQueue.
         queue.add(stringRequest);
+
     }
 
     private void parseBusInfo(String rawJson) {
@@ -221,10 +230,48 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
 
     private void setUpMap() {
         mMap.setMyLocationEnabled(true);
-        addBUStops();
+        String encodedString = "q~saGl}upLYhAYfAU|@S|@Mh@y@fDCTEN]x@ELi@xAk@xAi@nAsAjDs@fBo@|A]z@k@xAIRgCnGIR}@~By@rBEJo@`BMVUl@aAdCITM^";
+        List<LatLng> list = decodePoly(encodedString);
+        Polyline line = mMap.addPolyline(new PolylineOptions()
+                .addAll(list)
+                .width(12)
+                .color(Color.parseColor("#05b1fb"))//Google maps blue color
+                .geodesic(true)
+        );
+        addBUStopsRegularHours();
     }
+    private List<LatLng> decodePoly(String encoded) {
+        List<LatLng> poly = new ArrayList<LatLng>();
+        int index = 0, len = encoded.length();
+        int lat = 0, lng = 0;
 
-    private void addBUStops() { // plot each BU stop
+        while (index < len) {
+            int b, shift = 0, result = 0;
+            do {
+                b = encoded.charAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+            lat += dlat;
+
+            shift = 0;
+            result = 0;
+            do {
+                b = encoded.charAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+            lng += dlng;
+
+            LatLng p = new LatLng((((double) lat / 1E5)),
+                    (((double) lng / 1E5)));
+            poly.add(p);
+        }
+        return poly;
+    }
+    private void addBUStopsRegularHours() { // plot each BU stop
 
         Marker MylesStandish = mMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.349536,-71.094530))
@@ -366,6 +413,58 @@ public class MapsActivity extends Activity implements GoogleMap.OnMarkerClickLis
         animator.setDuration(3000);
         animator.start();
     }
+
+
+//
+//    private void getDirection(){
+//        //Getting the URL
+//        String url = makeURL(fromLatitude, fromLongitude, toLatitude, toLongitude);
+//
+//        //Showing a dialog till we get the route
+//        final ProgressDialog loading = ProgressDialog.show(this, "Getting Route", "Please wait...", false, false);
+//
+//        //Creating a string request
+//        StringRequest stringRequest = new StringRequest(url,
+//                new Response.Listener<String>() {
+//                    @Override
+//                    public void onResponse(String response) {
+//                        loading.dismiss();
+//                        //Calling the method drawPath to draw the path
+//                        drawPath(response);
+//                    }
+//                },
+//                new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        loading.dismiss();
+//                    }
+//                });
+//
+//        //Adding the request to request queue
+//        RequestQueue requestQueue = Volley.newRequestQueue(this);
+//        requestQueue.add(stringRequest);
+//    }
+
+//    // traversing through routes
+//    for (int i = 0; i < routes.size(); i++) {
+//        points = new ArrayList<LatLng>();
+//        polyLineOptions = new PolylineOptions();
+//        List<HashMap<String, String>> path = routes.get(i);
+//
+//        for (int j = 0; j < path.size(); j++) {
+//            HashMap<String, String> point = path.get(j);
+//
+//            double lat = Double.parseDouble(point.get("lat"));
+//            double lng = Double.parseDouble(point.get("lng"));
+//            LatLng position = new LatLng(lat, lng);
+//
+//            points.add(position);
+//        }
+//
+//        polyLineOptions.addAll(points);
+//        polyLineOptions.width(2);
+//        polyLineOptions.color(Color.BLUE);
+//    }
 
 
 }
