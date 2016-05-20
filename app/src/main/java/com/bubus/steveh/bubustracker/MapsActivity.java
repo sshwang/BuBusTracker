@@ -34,6 +34,9 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.common.collect.HashBiMap;
 
+import com.mapbox.mapboxsdk.maps.MapView;
+import com.mapbox.mapboxsdk.maps.MapboxMap;
+import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 
 import org.json.JSONException;
 import org.json.JSONObject;
