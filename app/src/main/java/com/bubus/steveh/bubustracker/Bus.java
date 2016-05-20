@@ -1,7 +1,7 @@
 package com.bubus.steveh.bubustracker;
 
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
+import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.annotations.Marker;
 
 import org.json.JSONArray;
 import org.json.JSONException;

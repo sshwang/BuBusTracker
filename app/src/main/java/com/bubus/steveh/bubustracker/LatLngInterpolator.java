@@ -3,7 +3,7 @@
 
 package com.bubus.steveh.bubustracker;
 
-import com.google.android.gms.maps.model.LatLng;
+import com.mapbox.mapboxsdk.geometry.LatLng;
 
 import static java.lang.Math.asin;
 import static java.lang.Math.atan2;
@@ -20,8 +20,8 @@ public interface LatLngInterpolator {
     public class Linear implements LatLngInterpolator {
         @Override
         public LatLng interpolate(float fraction, LatLng a, LatLng b) {
-            double lat = (b.latitude - a.latitude) * fraction + a.latitude;
-            double lng = (b.longitude - a.longitude) * fraction + a.longitude;
+            double lat = (b.getLatitude() - a.getLatitude()) * fraction + a.getLatitude();
+            double lng = (b.getLongitude() - a.getLongitude()) * fraction + a.getLongitude();
             return new LatLng(lat, lng);
         }
     }
@@ -29,14 +29,14 @@ public interface LatLngInterpolator {
     public class LinearFixed implements LatLngInterpolator {
         @Override
         public LatLng interpolate(float fraction, LatLng a, LatLng b) {
-            double lat = (b.latitude - a.latitude) * fraction + a.latitude;
-            double lngDelta = b.longitude - a.longitude;
+            double lat = (b.getLatitude() - a.getLatitude()) * fraction + a.getLatitude();
+            double lngDelta = b.getLongitude() - a.getLongitude();
 
             // Take the shortest path across the 180th meridian.
             if (Math.abs(lngDelta) > 180) {
                 lngDelta -= Math.signum(lngDelta) * 360;
             }
-            double lng = lngDelta * fraction + a.longitude;
+            double lng = lngDelta * fraction + a.getLongitude();
             return new LatLng(lat, lng);
         }
     }
@@ -47,10 +47,10 @@ public interface LatLngInterpolator {
         @Override
         public LatLng interpolate(float fraction, LatLng from, LatLng to) {
             // http://en.wikipedia.org/wiki/Slerp
-            double fromLat = toRadians(from.latitude);
-            double fromLng = toRadians(from.longitude);
-            double toLat = toRadians(to.latitude);
-            double toLng = toRadians(to.longitude);
+            double fromLat = toRadians(from.getLatitude());
+            double fromLng = toRadians(from.getLongitude());
+            double toLat = toRadians(to.getLatitude());
+            double toLng = toRadians(to.getLongitude());
             double cosFromLat = cos(fromLat);
             double cosToLat = cos(toLat);
 

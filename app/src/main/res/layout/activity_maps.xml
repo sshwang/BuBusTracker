@@ -1,8 +1,17 @@
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:mapbox="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/map"
-    tools:context=".MapsActivity"
-    android:name="com.google.android.gms.maps.MapFragment"
-    />
+    tools:context=".MapsActivity">
+
+    <!-- Set the starting camera position and map style using xml-->
+    <com.mapbox.mapboxsdk.maps.MapView
+        android:id="@+id/mapView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        mapbox:access_token="pk.eyJ1Ijoic2h3YW5nIiwiYSI6ImNpb2E1NXdzNDAzOW92Z2txeHo0aXprdDcifQ.KjGHeefesn5zWFZsLgu7Rg"
+        mapbox:style_url="mapbox://styles/mapbox/streets-v9"
+        mapbox:zoom="11"/>
+
+</RelativeLayout>

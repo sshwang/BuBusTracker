@@ -5,6 +5,7 @@ import android.animation.ObjectAnimator;
 import android.animation.TypeEvaluator;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -27,16 +28,18 @@ import com.android.volley.toolbox.Volley;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.common.collect.HashBiMap;
 
+import com.mapbox.mapboxsdk.annotations.Icon;
+import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+import com.mapbox.mapboxsdk.annotations.Marker;
+import com.mapbox.mapboxsdk.annotations.MarkerOptions;
+import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -51,7 +54,7 @@ import java.lang.Runnable;
 import java.util.Iterator;
 
 
-public class MapsActivity extends Activity implements GoogleMap.OnMyLocationChangeListener, GoogleMap.OnInfoWindowClickListener{
+public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChangeListener, MapboxMap.OnInfoWindowClickListener, OnMapReadyCallback{
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private HashMap<Integer, Bus> busIDtoBus = new HashMap<Integer, Bus>();
     private HashBiMap<Integer, Marker> busIDandMarkerHashBiMap = HashBiMap.create();
@@ -59,6 +62,8 @@ public class MapsActivity extends Activity implements GoogleMap.OnMyLocationChan
     private Handler mHandler;
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 1;
     private LatLngInterpolator mLatLngInterpolator;
+    private MapView mapView;
+    private MapboxMap mbMap;
 
 
     @Override
@@ -69,9 +74,25 @@ public class MapsActivity extends Activity implements GoogleMap.OnMyLocationChan
         mLatLngInterpolator = new LatLngInterpolator.Linear();
 
         verifyPermissions(this); // android 6.0+ permissions
-        setUpMapIfNeeded(); // start setting up map
+        //setUpMapIfNeeded(); // start setting up map
+
+        mapView = (MapView) findViewById(R.id.mapView);
+        mapView.onCreate(savedInstanceState);
+        mapView.getMapAsync(this);
 
         mHandler = new Handler();
+
+
+    }
+
+    @Override
+    public void onMapReady(MapboxMap mapboxMap) {
+        mbMap = mapboxMap;
+        mbMap.setMyLocationEnabled(true);
+        mbMap.setOnMyLocationChangeListener(this);
+        mbMap.setOnInfoWindowClickListener(this);
+        addBUStops();
+        // Customize map with markers, polylines, etc.
     }
 
     Runnable mStatusChecker = new Runnable() {
@@ -83,7 +104,7 @@ public class MapsActivity extends Activity implements GoogleMap.OnMyLocationChan
     };
 
     @Override
-    public void onInfoWindowClick(Marker marker) {
+    public boolean onInfoWindowClick(Marker marker) {
         if (busIDandMarkerHashBiMap.containsValue(marker)) { // IF the marker is a bus
             Integer busId = busIDandMarkerHashBiMap.inverse().get(marker);
             Bus selectedBus = busIDtoBus.get(busId);
@@ -117,6 +138,7 @@ public class MapsActivity extends Activity implements GoogleMap.OnMyLocationChan
         else { // IF the marker is a stop
 
         }
+        return true;
     }
 
     private void getBusInfo() {
@@ -171,23 +193,32 @@ public class MapsActivity extends Activity implements GoogleMap.OnMyLocationChan
                     }
 
                     Integer resId = getResources().getIdentifier(busIcon, "drawable", getPackageName());
+                    IconFactory iconFactory = IconFactory.getInstance(MapsActivity.this);
 
                     if (!busIDtoBus.containsKey(id)) { // if this is a new bus
                         busIDtoBus.put(id, b); // put into id to bus hashmap
                         if (!busIDandMarkerHashBiMap.containsKey(id)) { // ensure there is also no marker for that bus id
-                            Marker m = mMap.addMarker(new MarkerOptions()
+                            Drawable iconDrawable = ContextCompat.getDrawable(MapsActivity.this, resId);
+                            Icon icon = iconFactory.fromDrawable(iconDrawable);
+                            Marker m = mbMap.addMarker(new MarkerOptions()
                                     .position(b.getLatLng())
-                                    .icon(BitmapDescriptorFactory.fromResource(resId))
+                                    .icon(icon)
                                     .snippet(minToArrival)
                                     .title(nextStop));
                             busIDandMarkerHashBiMap.put(id, m); // create a marker, plot, and add it to the marker hashmap
                         }
                     }
                     else { // if this bus already exists
-                        Marker m = busIDandMarkerHashBiMap.get(id);
-                        m.setIcon(BitmapDescriptorFactory.fromResource(resId));
-                        m.setSnippet(minToArrival);
-                        m.setTitle(nextStop);
+                        Drawable iconDrawable = ContextCompat.getDrawable(MapsActivity.this, resId);
+                        Icon icon = iconFactory.fromDrawable(iconDrawable);
+                        Marker oldM = busIDandMarkerHashBiMap.get(id);
+                        Marker m = mbMap.addMarker(new MarkerOptions()
+                                .position(oldM.getPosition())
+                                .icon(icon)
+                                .snippet(minToArrival)
+                                .title(nextStop));
+                        oldM.remove();
+                        busIDandMarkerHashBiMap.forcePut(id, m);
                         animateMarkerToICS(busIDandMarkerHashBiMap.get(id), b.getLatLng(),mLatLngInterpolator);// get the marker and animate it
                         busIDandMarkerHashBiMap.put(id, m);
                     }
@@ -239,19 +270,19 @@ public class MapsActivity extends Activity implements GoogleMap.OnMyLocationChan
      * stopped or paused), {@link #onCreate(Bundle)} may not be called again so we should call this
      * method in {@link #onResume()} to guarantee that it will be called.
      */
-    private void setUpMapIfNeeded() {
-        // Do a null check to confirm that we have not already instantiated the map.
-        if (mMap == null) {
-            // Try to obtain the map from the SupportMapFragment.
-            mMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
-            // Check if we were successful in obtaining the map.
-            if (mMap != null) {
-                mMap.setOnMyLocationChangeListener(this);
-                mMap.setOnInfoWindowClickListener(this);
-                setUpMap();
-            }
-        }
-    }
+//    private void setUpMapIfNeeded() {
+//        // Do a null check to confirm that we have not already instantiated the map.
+//        if (mMap == null) {
+//            // Try to obtain the map from the SupportMapFragment.
+//            mMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
+//            // Check if we were successful in obtaining the map.
+//            if (mMap != null) {
+//                mMap.setOnMyLocationChangeListener(this);
+//                mMap.setOnInfoWindowClickListener(this);
+//                setUpMap();
+//            }
+//        }
+//    }
 
     private void setUpMap() {
         mMap.setMyLocationEnabled(true);
@@ -259,59 +290,62 @@ public class MapsActivity extends Activity implements GoogleMap.OnMyLocationChan
     }
 
     private void addBUStops() { // plot each BU stop
+        IconFactory iconFactory = IconFactory.getInstance(MapsActivity.this);
+        Drawable iconDrawable = ContextCompat.getDrawable(MapsActivity.this, R.drawable.bus_stop2);
+        Icon icon = iconFactory.fromDrawable(iconDrawable);
 
-        Marker MylesStandish = mMap.addMarker(new MarkerOptions()
+        Marker MylesStandish = mbMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.349536,-71.094530))
                 .title("Myles Standish")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
-        Marker SilberWay = mMap.addMarker(new MarkerOptions()
+                .icon(icon));
+        Marker SilberWay = mbMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.349453,-71.100748))
                 .title("Silber Way")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
-        Marker MarshPlaza = mMap.addMarker(new MarkerOptions()
+                .icon(icon));
+        Marker MarshPlaza = mbMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.350181,-71.106085))
                 .title("Marsh Plaza")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
-        Marker CFA = mMap.addMarker(new MarkerOptions()
+                .icon(icon));
+        Marker CFA = mbMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.351191,-71.114019))
                 .title("CFA")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
-        Marker Stuvi2 = mMap.addMarker(new MarkerOptions()
+                .icon(icon));
+        Marker Stuvi2 = mbMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.351819,-71.118085))
                 .title("Stuvi 2")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
-        Marker AmorySt = mMap.addMarker(new MarkerOptions()
+                .icon(icon));
+        Marker AmorySt = mbMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.350354,-71.113654))
                 .title("Amory St")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
-        Marker StMarysSt = mMap.addMarker(new MarkerOptions()
+                .icon(icon));
+        Marker StMarysSt = mbMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.349553,-71.106310))
                 .title("St Mary's St")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
-        Marker BlanfordSt = mMap.addMarker(new MarkerOptions()
+                .icon(icon));
+        Marker BlanfordSt = mbMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.348802,-71.100170))
                 .title("Blanford St")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
-        Marker Kenmore = mMap.addMarker(new MarkerOptions()
+                .icon(icon));
+        Marker Kenmore = mbMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.348585,-71.095490))
                 .title("Kenmore")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
-        Marker AlbanySt = mMap.addMarker(new MarkerOptions()
+                .icon(icon));
+        Marker AlbanySt = mbMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.335132,-71.070798))
                 .title("Albany St")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
-        Marker HuntingtonAve1 = mMap.addMarker(new MarkerOptions()
+                .icon(icon));
+        Marker HuntingtonAve1 = mbMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.342348,-71.084756))
                 .title("Huntington Ave Outbound")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
-        Marker HuntingtonAve2 = mMap.addMarker(new MarkerOptions()
+                .icon(icon));
+        Marker HuntingtonAve2 = mbMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.342336,-71.084150))
                 .title("Huntington Ave Inbound")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
-        Marker DanielsonHall = mMap.addMarker(new MarkerOptions()
+                .icon(icon));
+        Marker DanielsonHall = mbMap.addMarker(new MarkerOptions()
                 .position(new LatLng(42.350876,-71.089718))
                 .title("Danielson Hall")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_stop2)));
+                .icon(icon));
 
     }
 
@@ -342,10 +376,10 @@ public class MapsActivity extends Activity implements GoogleMap.OnMyLocationChan
     public void onMyLocationChange(Location location) {
         if (location != null) {
             LatLng myLocation = new LatLng(location.getLatitude(), location.getLongitude());
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(myLocation, 15)); // Jump to current location on app open
+            mbMap.animateCamera(CameraUpdateFactory.newLatLngZoom(myLocation, 15)); // Jump to current location on app open
 
         }
-        mMap.setOnMyLocationChangeListener(null); // Stop jumping to current location on location change
+        mbMap.setOnMyLocationChangeListener(null); // Stop jumping to current location on location change
     }
 
     private void createSnackbar(String text) {
@@ -372,7 +406,7 @@ public class MapsActivity extends Activity implements GoogleMap.OnMyLocationChan
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // permission granted
-                    mMap.setMyLocationEnabled(true);
+                    mbMap.setMyLocationEnabled(true);
 
                 } else {
                     // permission denied. Handle error
