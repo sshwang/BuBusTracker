@@ -5,6 +5,7 @@ import android.animation.ObjectAnimator;
 import android.animation.TypeEvaluator;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.support.design.widget.Snackbar;
@@ -31,8 +32,14 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.common.collect.HashBiMap;
 
+import com.mapbox.directions.DirectionsCriteria;
+import com.mapbox.directions.MapboxDirections;
+import com.mapbox.directions.service.models.DirectionsResponse;
+import com.mapbox.directions.service.models.DirectionsRoute;
+import com.mapbox.directions.service.models.Waypoint;
 import com.mapbox.mapboxsdk.annotations.Icon;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
+import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
@@ -45,6 +52,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -52,6 +60,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.lang.Runnable;
 import java.util.Iterator;
+import java.util.List;
 
 
 public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChangeListener, MapboxMap.OnInfoWindowClickListener, OnMapReadyCallback{
@@ -92,6 +101,7 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
         mbMap.setOnMyLocationChangeListener(this);
         mbMap.setOnInfoWindowClickListener(this);
         addBUStops();
+        drawPath();
         // Customize map with markers, polylines, etc.
     }
 
@@ -289,6 +299,42 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
         addBUStops();
     }
 
+    private void drawPath() {
+        List<Waypoint> waypoints = new ArrayList<Waypoint>();
+        waypoints.add(new Waypoint(42.349536,-71.094530));
+        waypoints.add(new Waypoint(42.349453,-71.100748));
+        waypoints.add(new Waypoint(42.350181,-71.106085));
+        waypoints.add(new Waypoint(42.351191,-71.114019));
+        waypoints.add(new Waypoint(42.351819,-71.118085));
+
+
+        MapboxDirections client = new MapboxDirections.Builder()
+                .setAccessToken(getResources().getString(R.string.mapbox_key))
+                .setWaypoints(waypoints)
+                .setProfile(DirectionsCriteria.PROFILE_DRIVING)
+                .build();
+        try {
+            retrofit.Response<DirectionsResponse> response = client.execute();
+            DirectionsRoute route = response.body().getRoutes().get(0);
+            List<Waypoint> waypointsReturned = route.getGeometry().getWaypoints();
+            LatLng[] points = new LatLng[waypointsReturned.size()];
+            for (int i = 0; i < waypointsReturned.size(); i++) {
+                points[i] = new LatLng(
+                        waypointsReturned.get(i).getLatitude(),
+                        waypointsReturned.get(i).getLongitude());
+            }
+
+            // Draw Points on MapView
+            mbMap.addPolyline(new PolylineOptions()
+                    .add(points)
+                    .color(Color.parseColor("#3887be"))
+                    .width(5));
+        } catch (Exception e) {
+            Integer n = 0;
+            // handle exception...
+        }
+
+    }
     private void addBUStops() { // plot each BU stop
         IconFactory iconFactory = IconFactory.getInstance(MapsActivity.this);
         Drawable iconDrawable = ContextCompat.getDrawable(MapsActivity.this, R.drawable.bus_stop2);
