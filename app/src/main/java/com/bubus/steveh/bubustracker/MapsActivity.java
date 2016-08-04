@@ -4,10 +4,15 @@ import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.animation.TypeEvaluator;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+import android.provider.SyncStateContract;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -15,6 +20,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.location.Location;
 import android.support.v7.app.AlertDialog;
+import android.text.TextUtils;
+import android.util.Log;
 import android.util.Property;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -32,11 +39,6 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.common.collect.HashBiMap;
 
-import com.mapbox.directions.DirectionsCriteria;
-import com.mapbox.directions.MapboxDirections;
-import com.mapbox.directions.service.models.DirectionsResponse;
-import com.mapbox.directions.service.models.DirectionsRoute;
-import com.mapbox.directions.service.models.Waypoint;
 import com.mapbox.mapboxsdk.annotations.Icon;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
@@ -47,12 +49,26 @@ import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
+import com.mapbox.services.Constants;
+import com.mapbox.services.commons.ServicesException;
+import com.mapbox.services.commons.geojson.LineString;
+import com.mapbox.services.commons.models.Position;
+import com.mapbox.services.directions.v4.DirectionsCriteria;
+import com.mapbox.services.directions.v4.models.DirectionsResponse;
+import com.mapbox.services.directions.v4.models.Waypoint;
+import com.mapbox.services.directions.v4.MapboxDirections;
+import com.mapbox.services.directions.v4.models.DirectionsRoute;
+
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -67,12 +83,13 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private HashMap<Integer, Bus> busIDtoBus = new HashMap<Integer, Bus>();
     private HashBiMap<Integer, Marker> busIDandMarkerHashBiMap = HashBiMap.create();
-    private int interval = 5000;
-    private Handler mHandler;
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 1;
     private LatLngInterpolator mLatLngInterpolator;
     private MapView mapView;
     private MapboxMap mbMap;
+    private DirectionsRoute currentRoute;
+    private static final String TAG = "MainActivity";
+    private Intent intent;
 
 
     @Override
@@ -82,16 +99,14 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
         setContentView(R.layout.activity_maps);
         mLatLngInterpolator = new LatLngInterpolator.Linear();
 
+        intent = new Intent(this, AsyncTaskService.class);
+
         verifyPermissions(this); // android 6.0+ permissions
         //setUpMapIfNeeded(); // start setting up map
 
         mapView = (MapView) findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
-
-        mHandler = new Handler();
-
-
     }
 
     @Override
@@ -101,17 +116,13 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
         mbMap.setOnMyLocationChangeListener(this);
         mbMap.setOnInfoWindowClickListener(this);
         addBUStops();
-        drawPath();
-        // Customize map with markers, polylines, etc.
+//        try {
+//            getRoute();
+//        } catch (ServicesException e) {
+//            e.printStackTrace();
+//        }        // Customize map with markers, polylines, etc.
     }
 
-    Runnable mStatusChecker = new Runnable() {
-        @Override
-        public void run() {
-            getBusInfo();
-            mHandler.postDelayed(mStatusChecker, interval);
-        }
-    };
 
     @Override
     public boolean onInfoWindowClick(Marker marker) {
@@ -151,28 +162,30 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
         return true;
     }
 
-    private void getBusInfo() {
-        // Instantiate the RequestQueue.
-        RequestQueue queue = Volley.newRequestQueue(this);
-        String url = "http://www.bu.edu/bumobile/rpc/bus/livebus.json.php";
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //updateUI(intent);
+//            String counter = intent.getStringExtra("counter");
+            String time = intent.getStringExtra("time");
+            Integer n = 0;
+        }
+    };
 
-        // Request a string response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Integer n = 0; // response should be here in successful
-                        parseBusInfo(response);
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Integer n = 0; //debug
-            }
-        });
-        // Add the request to the RequestQueue.
-        queue.add(stringRequest);
+    @Override
+    public void onResume() {
+        super.onResume();
+        startService(intent);
+        registerReceiver(broadcastReceiver, new IntentFilter(AsyncTaskService.BROADCAST_ACTION));
     }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        unregisterReceiver(broadcastReceiver);
+        stopService(intent);
+    }
+
 
     private void parseBusInfo(String rawJson) {
         ArrayList<Bus> busArray;
@@ -254,87 +267,62 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
     }
 
 
-    @Override
-    public void onResume() {
-        mHandler.postDelayed(mStatusChecker, interval); // start handler
-        super.onResume();
-    }
-
-    @Override
-    public void onPause() {
-        mHandler.removeCallbacks(mStatusChecker); // close handler
-        super.onPause();
-    }
-    /**
-     * Sets up the map if it is possible to do so (i.e., the Google Play services APK is correctly
-     * installed) and the map has not already been instantiated.. This will ensure that we only ever
-     * call {@link #setUpMap()} once when {@link #mMap} is not null.
-     * <p>
-     * If it isn't installed {@link SupportMapFragment} (and
-     * {@link com.google.android.gms.maps.MapView MapView}) will show a prompt for the user to
-     * install/update the Google Play services APK on their device.
-     * <p>
-     * A user can return to this FragmentActivity after following the prompt and correctly
-     * installing/updating/enabling the Google Play services. Since the FragmentActivity may not
-     * have been completely destroyed during this process (it is likely that it would only be
-     * stopped or paused), {@link #onCreate(Bundle)} may not be called again so we should call this
-     * method in {@link #onResume()} to guarantee that it will be called.
-     */
-//    private void setUpMapIfNeeded() {
-//        // Do a null check to confirm that we have not already instantiated the map.
-//        if (mMap == null) {
-//            // Try to obtain the map from the SupportMapFragment.
-//            mMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
-//            // Check if we were successful in obtaining the map.
-//            if (mMap != null) {
-//                mMap.setOnMyLocationChangeListener(this);
-//                mMap.setOnInfoWindowClickListener(this);
-//                setUpMap();
-//            }
-//        }
-//    }
-
     private void setUpMap() {
         mMap.setMyLocationEnabled(true);
         addBUStops();
     }
 
-    private void drawPath() {
-        List<Waypoint> waypoints = new ArrayList<Waypoint>();
-        waypoints.add(new Waypoint(42.349536,-71.094530));
-        waypoints.add(new Waypoint(42.349453,-71.100748));
-        waypoints.add(new Waypoint(42.350181,-71.106085));
-        waypoints.add(new Waypoint(42.351191,-71.114019));
-        waypoints.add(new Waypoint(42.351819,-71.118085));
+    private void getRoute()  throws ServicesException {
+            final Waypoint origin = new Waypoint(42.342348,-71.084756);
+            final Waypoint destination = new Waypoint(42.342336,-71.084150);
 
+            List<Waypoint> waypoints = new ArrayList<Waypoint>();
+            waypoints.add(new Waypoint(42.349536,-71.094530));
+            waypoints.add(new Waypoint(42.349453,-71.100748));
+            waypoints.add(new Waypoint(42.350181,-71.106085));
+            waypoints.add(new Waypoint(42.351191,-71.114019));
+            waypoints.add(new Waypoint(42.351819,-71.118085));
 
-        MapboxDirections client = new MapboxDirections.Builder()
-                .setAccessToken(getResources().getString(R.string.mapbox_key))
-                .setWaypoints(waypoints)
-                .setProfile(DirectionsCriteria.PROFILE_DRIVING)
-                .build();
-        try {
-            retrofit.Response<DirectionsResponse> response = client.execute();
-            DirectionsRoute route = response.body().getRoutes().get(0);
-            List<Waypoint> waypointsReturned = route.getGeometry().getWaypoints();
-            LatLng[] points = new LatLng[waypointsReturned.size()];
-            for (int i = 0; i < waypointsReturned.size(); i++) {
-                points[i] = new LatLng(
-                        waypointsReturned.get(i).getLatitude(),
-                        waypointsReturned.get(i).getLongitude());
+            MapboxDirections client = new MapboxDirections.Builder()
+                    .setOrigin(origin)
+                    .setDestination(destination)
+                    .setWaypoints(waypoints)
+                    .setProfile(DirectionsCriteria.PROFILE_DRIVING)
+                    .setAccessToken(getResources().getString(R.string.mapbox_key))
+                    .build();
+            try {
+                retrofit2.Response<DirectionsResponse> response = client.executeCall();
+                if (response.body() == null) {
+                    Log.e(TAG, "No routes found, make sure you set the right user and access token.");
+                    return;
+                }
+                currentRoute = response.body().getRoutes().get(0);
+                drawRoute(currentRoute);
+            } catch (Exception e) {
+                Log.e(TAG, "Exception Loading GeoJSON: " + e.toString());
             }
-
-            // Draw Points on MapView
-            mbMap.addPolyline(new PolylineOptions()
-                    .add(points)
-                    .color(Color.parseColor("#3887be"))
-                    .width(5));
-        } catch (Exception e) {
-            Integer n = 0;
-            // handle exception...
         }
 
+    private void drawRoute(DirectionsRoute route) {
+        // Convert LineString coordinates into LatLng[]
+        LineString lineString = LineString.fromPolyline(route.getGeometry(), Constants.OSRM_PRECISION_V5);
+        List<Position> coordinates = lineString.getCoordinates();
+        LatLng[] points = new LatLng[coordinates.size()];
+        for (int i = 0; i < coordinates.size(); i++) {
+            points[i] = new LatLng(
+                    coordinates.get(i).getLatitude(),
+                    coordinates.get(i).getLongitude());
+        }
+
+        // Draw Points on MapView
+        mbMap.addPolyline(new PolylineOptions()
+                .add(points)
+                .color(Color.parseColor("#009688"))
+                .width(5));
     }
+
+
+
     private void addBUStops() { // plot each BU stop
         IconFactory iconFactory = IconFactory.getInstance(MapsActivity.this);
         Drawable iconDrawable = ContextCompat.getDrawable(MapsActivity.this, R.drawable.bus_stop2);
@@ -474,6 +462,4 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
         animator.setDuration(3000);
         animator.start();
     }
-
-
 }

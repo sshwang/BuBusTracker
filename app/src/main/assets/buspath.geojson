@@ -1,0 +1,36 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "BU Bus Path"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            42.349536,
+            -71.094530
+          ],
+          [
+            42.349453,
+            -71.100748
+          ],
+          [
+            42.350181,
+            -71.106085
+          ],
+          [
+            42.351191,
+            -71.114019
+          ],
+          [
+            42.351819,
+            -71.118085
+          ]
+        ]
+      }
+    }
+  ]
+}

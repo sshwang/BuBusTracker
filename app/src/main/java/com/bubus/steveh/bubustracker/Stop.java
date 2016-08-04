@@ -4,6 +4,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.TimeZone;
@@ -12,7 +13,7 @@ import java.text.SimpleDateFormat;
 /**
  * Created by steveh on 9/5/14.
  */
-public class Stop implements Comparable<Stop>{
+public class Stop implements Comparable<Stop>, Serializable{
     private String id;
     private String route;
     private String estimatedArrival;

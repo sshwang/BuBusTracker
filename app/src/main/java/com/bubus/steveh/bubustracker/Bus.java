@@ -7,12 +7,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  * Created by steveh on 9/3/14.
  */
-public class Bus {
+public class Bus implements Serializable {
 
     // 1) extend marker object to include ID and  2) bus object contains marker 3)
     private Integer id;
