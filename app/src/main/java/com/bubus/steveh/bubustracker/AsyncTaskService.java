@@ -118,7 +118,8 @@ public class AsyncTaskService extends Service {
         protected void onPostExecute(ArrayList<Bus> newBuses) {
             this.existingBuses = newBuses;
             intent.putExtra("time", "from AsyncTaskService");
-            intent.putExtra("busArray",newBuses );
+            intent.putExtra("newBuses", newBuses);
+            intent.putExtra("existingBuses", newBuses);
             sendBroadcast(intent);
         }
     }

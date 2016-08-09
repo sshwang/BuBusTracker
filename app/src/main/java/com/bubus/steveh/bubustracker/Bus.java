@@ -126,20 +126,22 @@ public class Bus implements Parcelable {
         dest.writeDouble(this.lat);
         dest.writeString(this.timestamp);
         dest.writeTypedList(stops);
+        dest.writeByte((byte) (this.hasStops ? 1 : 0));
     }
 
     public Bus() {
 
     }
 
-    public Bus(Parcel dest) {
-        this.id = dest.readInt();
-        this.generalHeading = dest.readInt();
-        this.lng = dest.readDouble();
-        this.lat = dest.readDouble();
-        this.timestamp = dest.readString();
+    public Bus(Parcel in) {
+        this.id = in.readInt();
+        this.generalHeading = in.readInt();
+        this.lng = in.readDouble();
+        this.lat = in.readDouble();
+        this.timestamp = in.readString();
         this.stops = new ArrayList<>();
-        dest.readTypedList(stops, Stop.CREATOR);
+        in.readTypedList(stops, Stop.CREATOR);
+        this.hasStops = in.readByte() != 0;
     }
 
 

@@ -11,32 +11,17 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
-import android.provider.SyncStateContract;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.os.Bundle;
-import android.os.Handler;
 import android.location.Location;
 import android.support.v7.app.AlertDialog;
-import android.text.TextUtils;
 import android.util.Log;
 import android.util.Property;
 import android.view.Menu;
 import android.view.MenuInflater;
-import android.widget.Toast;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.common.collect.HashBiMap;
 
 import com.mapbox.mapboxsdk.annotations.Icon;
@@ -64,24 +49,18 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.lang.Runnable;
 import java.util.Iterator;
 import java.util.List;
 
 
 public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChangeListener, MapboxMap.OnInfoWindowClickListener, OnMapReadyCallback{
-    private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private HashMap<Integer, Bus> busIDtoBus = new HashMap<Integer, Bus>();
+    private HashMap<Integer, Marker> busIDtoMarker = new HashMap<Integer, Marker>();
     private HashBiMap<Integer, Marker> busIDandMarkerHashBiMap = HashBiMap.create();
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 1;
     private LatLngInterpolator mLatLngInterpolator;
@@ -168,10 +147,53 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
             //updateUI(intent);
 //            String counter = intent.getStringExtra("counter");
             String time = intent.getStringExtra("time");
-            ArrayList<Bus> buses =  intent.getExtras().getParcelableArrayList("busArray");
+            ArrayList<Bus> newBuses =  intent.getExtras().getParcelableArrayList("newBuses");
+            ArrayList<Bus> existingBuses =  intent.getExtras().getParcelableArrayList("existingBuses");
+            animateExistingBus(existingBuses);
             Integer n = 0;
         }
     };
+
+    public void plotNewBus(Bus bus){
+        if (bus != null) {
+                Icon icon = getIconForBus(bus.getGeneralHeading());
+                Marker m = mbMap.addMarker(new MarkerOptions()
+                        .position(bus.getLatLng())
+                        .icon(icon)
+                        .title(bus.getHasStops() ? bus.getNextStop().getStopName() + ": " + getETA(bus.getNextStop().getEstimatedArrivalDate()) : "No Schedule Available")
+                        .snippet(bus.getHasStops() ? bus.getNextStop().getStopName() + ": " + getETA(bus.getNextStop().getEstimatedArrivalDate()) : "No Schedule Available"));
+                busIDtoMarker.put(bus.getId(), m);
+        }
+    }
+
+    public void animateExistingBus(ArrayList<Bus> buses){
+        if (buses != null && buses.isEmpty() != true) {
+            for (Bus b: buses) {
+                if (busIDtoMarker.containsKey(b.getId())) {
+                    Marker existingMarker = busIDtoMarker.get(b.getId());
+                    Icon icon = getIconForBus(b.getGeneralHeading());
+                    animateMarkerToICS(existingMarker, b.getLatLng(),mLatLngInterpolator);// get the marker and animate it
+                    existingMarker.setIcon(icon);
+                    existingMarker.setTitle(b.getHasStops() ? b.getNextStop().getStopName() + ": " + getETA(b.getNextStop().getEstimatedArrivalDate()): "No Schedule Available");
+                    existingMarker.setSnippet(b.getHasStops() ? b.getNextStop().getStopName() + ": " + getETA(b.getNextStop().getEstimatedArrivalDate())  : "No Schedule Available");
+                    busIDtoMarker.put(b.getId(), existingMarker);
+                }
+                else {
+                    plotNewBus(b);
+                }
+
+            }
+        }
+    }
+
+    public Icon getIconForBus(Integer generalHeading) {
+        String busIcon = "bus421" + generalHeading + "degrees";
+        Integer resId = getResources().getIdentifier(busIcon, "drawable", getPackageName());
+        IconFactory iconFactory = IconFactory.getInstance(MapsActivity.this);
+        Drawable iconDrawable = ContextCompat.getDrawable(MapsActivity.this, resId);
+        Icon icon = iconFactory.fromDrawable(iconDrawable);
+        return icon;
+    }
 
     @Override
     public void onResume() {
@@ -267,11 +289,6 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
         return super.onCreateOptionsMenu(menu);
     }
 
-
-    private void setUpMap() {
-        mMap.setMyLocationEnabled(true);
-        addBUStops();
-    }
 
     private void getRoute()  throws ServicesException {
             final Waypoint origin = new Waypoint(42.342348,-71.084756);

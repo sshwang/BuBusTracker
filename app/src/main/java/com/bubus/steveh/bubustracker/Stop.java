@@ -49,12 +49,12 @@ public class Stop implements Comparable<Stop>,Parcelable{
         }
     };
 
-    public Stop(Parcel dest) {
-        this.id = dest.readString();
-        this.route = dest.readString();
-        this.estimatedArrival = dest.readString();
-        this.stopName = dest.readString();
-        this.estimatedArrivalDate = (java.util.Date) dest.readSerializable();
+    public Stop(Parcel in) {
+        this.id = in.readString();
+        this.route = in.readString();
+        this.estimatedArrival = in.readString();
+        this.stopName = in.readString();
+        this.estimatedArrivalDate = (java.util.Date) in.readSerializable();
     }
 
     public Stop() {
