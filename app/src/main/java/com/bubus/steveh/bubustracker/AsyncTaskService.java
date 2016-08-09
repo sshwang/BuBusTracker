@@ -97,11 +97,13 @@ public class AsyncTaskService extends Service {
                 if (totalResultsAvailable == 0) {
                     Integer n = 0; //debug
                 } else if (isMissingResults == 1) {
-                    Integer n = 0; //debug                } else {
+                    Integer n = 0;
+                } else {
                     JSONObject resultSet = allData.getJSONObject("ResultSet");
                     JSONArray buses = resultSet.getJSONArray("Result");
                     Bus currentBuses = new Bus();
                     busArray = currentBuses.fromJsonArray(buses); // parsing done. busArray is array of Bus objects
+                    return busArray;
                 }
             } catch (JSONException e) {
                 Log.e(TAG, e.getLocalizedMessage());
@@ -114,7 +116,9 @@ public class AsyncTaskService extends Service {
 
         @Override
         protected void onPostExecute(ArrayList<Bus> newBuses) {
-            intent.putExtra("time", "from onpostexecute");
+            this.existingBuses = newBuses;
+            intent.putExtra("time", "from AsyncTaskService");
+            intent.putExtra("busArray",newBuses );
             sendBroadcast(intent);
         }
     }

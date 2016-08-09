@@ -168,6 +168,7 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
             //updateUI(intent);
 //            String counter = intent.getStringExtra("counter");
             String time = intent.getStringExtra("time");
+            ArrayList<Bus> buses =  intent.getExtras().getParcelableArrayList("busArray");
             Integer n = 0;
         }
     };

@@ -1,5 +1,8 @@
 package com.bubus.steveh.bubustracker;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -13,7 +16,7 @@ import java.text.SimpleDateFormat;
 /**
  * Created by steveh on 9/5/14.
  */
-public class Stop implements Comparable<Stop>, Serializable{
+public class Stop implements Comparable<Stop>,Parcelable{
     private String id;
     private String route;
     private String estimatedArrival;
@@ -21,6 +24,41 @@ public class Stop implements Comparable<Stop>, Serializable{
     private static Integer numStops;
     private Date estimatedArrivalDate;
     private String estimatedTimeToArrival;
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.id);
+        dest.writeString(this.route);
+        dest.writeString(this.estimatedArrival);
+        dest.writeString(this.stopName);
+        dest.writeSerializable(this.estimatedArrivalDate);
+    }
+
+    public static final Parcelable.Creator<Stop> CREATOR = new Parcelable.Creator<Stop>() {
+        public Stop createFromParcel(Parcel dest) {
+            return new Stop(dest);
+        }
+
+        public Stop[] newArray(int size) {
+            return new Stop[size];
+        }
+    };
+
+    public Stop(Parcel dest) {
+        this.id = dest.readString();
+        this.route = dest.readString();
+        this.estimatedArrival = dest.readString();
+        this.stopName = dest.readString();
+        this.estimatedArrivalDate = (java.util.Date) dest.readSerializable();
+    }
+
+    public Stop() {
+    }
 
     public String getId() {
         return this.id;

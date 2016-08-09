@@ -1,5 +1,8 @@
 package com.bubus.steveh.bubustracker;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.annotations.Marker;
 
@@ -13,10 +16,11 @@ import java.util.ArrayList;
 /**
  * Created by steveh on 9/3/14.
  */
-public class Bus implements Serializable {
+public class Bus implements Parcelable {
 
     // 1) extend marker object to include ID and  2) bus object contains marker 3)
     private Integer id;
+    private Integer generalHeading;
     private Double lng;
     private Double lat;
     private String timestamp;
@@ -25,7 +29,6 @@ public class Bus implements Serializable {
     private String BusType;
     private Boolean hasStops = false;
     private Marker busMarker;
-    private Integer generalHeading;
 
     public Integer getId() {
         return id;
@@ -106,6 +109,49 @@ public class Bus implements Serializable {
         return buses;
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+//        dest.writeIntArray(new int[]{this.id,this.generalHeading});
+//        dest.writeDoubleArray(new double[]{this.lng, this.lat});
+//        dest.writeString(this.timestamp);
+//        dest.writeTypedList(stops);
+        dest.writeInt(this.id);
+        dest.writeInt(this.generalHeading);
+        dest.writeDouble(this.lng);
+        dest.writeDouble(this.lat);
+        dest.writeString(this.timestamp);
+        dest.writeTypedList(stops);
+    }
+
+    public Bus() {
+
+    }
+
+    public Bus(Parcel dest) {
+        this.id = dest.readInt();
+        this.generalHeading = dest.readInt();
+        this.lng = dest.readDouble();
+        this.lat = dest.readDouble();
+        this.timestamp = dest.readString();
+        this.stops = new ArrayList<>();
+        dest.readTypedList(stops, Stop.CREATOR);
+    }
+
+
+    public static final Parcelable.Creator<Bus> CREATOR = new Parcelable.Creator<Bus>() {
+        public Bus createFromParcel(Parcel dest) {
+            return new Bus(dest);
+        }
+
+        public Bus[] newArray(int size) {
+            return new Bus[size];
+        }
+    };
 }
 //switch(iId){
 //        case 4009127:
