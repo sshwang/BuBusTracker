@@ -9,6 +9,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
@@ -18,6 +21,7 @@ import android.support.v4.content.ContextCompat;
 import android.os.Bundle;
 import android.location.Location;
 import android.support.v7.app.AlertDialog;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.Property;
 import android.view.Menu;
@@ -250,10 +254,18 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
     public Icon getIconForBus(Integer generalHeading) {
         String busIcon = "bus421" + generalHeading + "degrees";
         Integer resId = getResources().getIdentifier(busIcon, "drawable", getPackageName());
+        Bitmap longBitMap = mapboxHackIcon(BitmapFactory.decodeResource(MapsActivity.this.getResources(), resId));
         IconFactory iconFactory = IconFactory.getInstance(MapsActivity.this);
-        Drawable iconDrawable = ContextCompat.getDrawable(MapsActivity.this, resId);
-        Icon icon = iconFactory.fromDrawable(iconDrawable);
+        Icon icon = iconFactory.fromBitmap(longBitMap);
         return icon;
+    }
+
+    public static Bitmap mapboxHackIcon(Bitmap icon){
+        Bitmap loc_img = Bitmap.createBitmap(icon.getWidth(), 2*icon.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas bitmapCanvas = new Canvas(loc_img);
+        Bitmap tempBitmap = icon.copy(Bitmap.Config.ARGB_8888, false);
+        bitmapCanvas.drawBitmap(tempBitmap, 0, 0, null);
+        return loc_img;
     }
 
     @Override
