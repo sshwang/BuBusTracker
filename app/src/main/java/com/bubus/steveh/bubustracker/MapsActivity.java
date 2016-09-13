@@ -11,6 +11,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -49,6 +50,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -94,12 +99,68 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
         mbMap.setMyLocationEnabled(true);
         mbMap.setOnMyLocationChangeListener(this);
         mbMap.setOnInfoWindowClickListener(this);
-        addBUStops();
-//        try {
-//            getRoute();
-//        } catch (ServicesException e) {
-//            e.printStackTrace();
-//        }        // Customize map with markers, polylines, etc.
+        new DrawGeoJSON().execute();
+    }
+
+    private class DrawGeoJSON extends AsyncTask<Void, Void, List<LatLng>> {
+        @Override
+        protected List<LatLng> doInBackground(Void... voids) {
+
+            ArrayList<LatLng> points = new ArrayList<>();
+
+            try {
+                // Load GeoJSON file
+                InputStream inputStream = getAssets().open("buspath.geojson");
+                BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream, Charset.forName("UTF-8")));
+                StringBuilder sb = new StringBuilder();
+                int cp;
+                while ((cp = rd.read()) != -1) {
+                    sb.append((char) cp);
+                }
+
+                inputStream.close();
+
+                // Parse JSON
+                JSONObject json = new JSONObject(sb.toString());
+                JSONArray features = json.getJSONArray("features");
+                JSONObject feature = features.getJSONObject(0);
+                JSONObject geometry = feature.getJSONObject("geometry");
+                if (geometry != null) {
+                    String type = geometry.getString("type");
+
+                    // Our GeoJSON only has one feature: a line string
+                    if (!TextUtils.isEmpty(type) && type.equalsIgnoreCase("LineString")) {
+
+                        // Get the Coordinates
+                        JSONArray coords = geometry.getJSONArray("coordinates");
+                        for (int lc = 0; lc < coords.length(); lc++) {
+                            JSONArray coord = coords.getJSONArray(lc);
+                            LatLng latLng = new LatLng(coord.getDouble(1), coord.getDouble(0));
+                            points.add(latLng);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Exception Loading GeoJSON: " + e.toString());
+            }
+
+            return points;
+        }
+
+        @Override
+        protected void onPostExecute(List<LatLng> points) {
+            super.onPostExecute(points);
+
+            if (points.size() > 0) {
+                LatLng[] pointsArray = points.toArray(new LatLng[points.size()]);
+
+                // Draw Points on MapView
+                mbMap.addPolyline(new PolylineOptions()
+                        .add(pointsArray)
+                        .color(Color.parseColor("#3bb2d0"))
+                        .width(2));
+            }
+        }
     }
 
 
@@ -287,56 +348,6 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.activity_main_actions, menu); // Leftover menu from older version
         return super.onCreateOptionsMenu(menu);
-    }
-
-
-    private void getRoute()  throws ServicesException {
-            final Waypoint origin = new Waypoint(42.342348,-71.084756);
-            final Waypoint destination = new Waypoint(42.342336,-71.084150);
-
-            List<Waypoint> waypoints = new ArrayList<Waypoint>();
-            waypoints.add(new Waypoint(42.349536,-71.094530));
-            waypoints.add(new Waypoint(42.349453,-71.100748));
-            waypoints.add(new Waypoint(42.350181,-71.106085));
-            waypoints.add(new Waypoint(42.351191,-71.114019));
-            waypoints.add(new Waypoint(42.351819,-71.118085));
-
-            MapboxDirections client = new MapboxDirections.Builder()
-                    .setOrigin(origin)
-                    .setDestination(destination)
-                    .setWaypoints(waypoints)
-                    .setProfile(DirectionsCriteria.PROFILE_DRIVING)
-                    .setAccessToken(getResources().getString(R.string.mapbox_key))
-                    .build();
-            try {
-                retrofit2.Response<DirectionsResponse> response = client.executeCall();
-                if (response.body() == null) {
-                    Log.e(TAG, "No routes found, make sure you set the right user and access token.");
-                    return;
-                }
-                currentRoute = response.body().getRoutes().get(0);
-                drawRoute(currentRoute);
-            } catch (Exception e) {
-                Log.e(TAG, "Exception Loading GeoJSON: " + e.toString());
-            }
-        }
-
-    private void drawRoute(DirectionsRoute route) {
-        // Convert LineString coordinates into LatLng[]
-        LineString lineString = LineString.fromPolyline(route.getGeometry(), Constants.OSRM_PRECISION_V5);
-        List<Position> coordinates = lineString.getCoordinates();
-        LatLng[] points = new LatLng[coordinates.size()];
-        for (int i = 0; i < coordinates.size(); i++) {
-            points[i] = new LatLng(
-                    coordinates.get(i).getLatitude(),
-                    coordinates.get(i).getLongitude());
-        }
-
-        // Draw Points on MapView
-        mbMap.addPolyline(new PolylineOptions()
-                .add(points)
-                .color(Color.parseColor("#009688"))
-                .width(5));
     }
 
 

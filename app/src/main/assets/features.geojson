@@ -1,0 +1,367 @@
+﻿{
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Danielson"
+      },
+      "geometry": {
+        "coordinates": [
+          -71.09015,
+          42.350748
+        ],
+        "type": "Point"
+      },
+      "id": "07654534af551348342c63b84e48c797"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Albany St."
+      },
+      "geometry": {
+        "coordinates": [
+          -71.070914,
+          42.335334
+        ],
+        "type": "Point"
+      },
+      "id": "1d47132a242d2c8ad9d655558993e196"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Stuvi 2"
+      },
+      "geometry": {
+        "coordinates": [
+          -71.118186,
+          42.35305
+        ],
+        "type": "Point"
+      },
+      "id": "3e987c841123386e6ae286214b6fff68"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": " Myles"
+      },
+      "geometry": {
+        "coordinates": [
+          -71.094572,
+          42.349522
+        ],
+        "type": "Point"
+      },
+      "id": "430ae0d5bd2c4021bd7aa5c30d41f316"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Marsh Plaza"
+      },
+      "geometry": {
+        "coordinates": [
+          -71.106438,
+          42.350108
+        ],
+        "type": "Point"
+      },
+      "id": "70bbf7cad5e6466fe54330824497ed3f"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Amory St."
+      },
+      "geometry": {
+        "coordinates": [
+          -71.113616,
+          42.350767
+        ],
+        "type": "Point"
+      },
+      "id": "8302a18fdee2798ffd402d06556c58ef"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Silber Way"
+      },
+      "geometry": {
+        "coordinates": [
+          -71.10073,
+          42.349434
+        ],
+        "type": "Point"
+      },
+      "id": "9877ea21cefa43023706815436db1c4e"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "CFA"
+      },
+      "geometry": {
+        "coordinates": [
+          -71.113873,
+          42.350996
+        ],
+        "type": "Point"
+      },
+      "id": "9d9fca39d64e28d8e12635fa93278aea"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Kenmore"
+      },
+      "geometry": {
+        "coordinates": [
+          -71.095614,
+          42.348786
+        ],
+        "type": "Point"
+      },
+      "id": "bc5fc148afc61c8a1a5db7b5dc97688e"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Huntington Ave."
+      },
+      "geometry": {
+        "coordinates": [
+          -71.084572,
+          42.342459
+        ],
+        "type": "Point"
+      },
+      "id": "c078ae7bc409a79e75ea53f155d95c16"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Blanford St."
+      },
+      "geometry": {
+        "coordinates": [
+          -71.100307,
+          42.349126
+        ],
+        "type": "Point"
+      },
+      "id": "c20507ee6b063e169dcaa7cce0cb26d2"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "St. Mary's St."
+      },
+      "geometry": {
+        "coordinates": [
+          -71.106358,
+          42.349871
+        ],
+        "type": "Point"
+      },
+      "id": "eac60eb439a3e2dcc9b3f79f6e44d809"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Route": "Weekdays"
+      },
+      "geometry": {
+        "coordinates": [
+          [
+            -71.118523,
+            42.351573
+          ],
+          [
+            -71.118076,
+            42.353636
+          ],
+          [
+            -71.117875,
+            42.353699
+          ],
+          [
+            -71.115523,
+            42.352508
+          ],
+          [
+            -71.115809,
+            42.351038
+          ],
+          [
+            -71.09725,
+            42.348796
+          ],
+          [
+            -71.096957,
+            42.348767
+          ],
+          [
+            -71.092848,
+            42.348822
+          ],
+          [
+            -71.09281,
+            42.348589
+          ],
+          [
+            -71.092401,
+            42.347688
+          ],
+          [
+            -71.092347,
+            42.34693
+          ],
+          [
+            -71.092154,
+            42.346765
+          ],
+          [
+            -71.091098,
+            42.346463
+          ],
+          [
+            -71.090882,
+            42.346304
+          ],
+          [
+            -71.090612,
+            42.345455
+          ],
+          [
+            -71.090766,
+            42.344776
+          ],
+          [
+            -71.090759,
+            42.344395
+          ],
+          [
+            -71.090443,
+            42.344093
+          ],
+          [
+            -71.089918,
+            42.343967
+          ],
+          [
+            -71.08587,
+            42.343323
+          ],
+          [
+            -71.085755,
+            42.343352
+          ],
+          [
+            -71.083766,
+            42.34199
+          ],
+          [
+            -71.083665,
+            42.341841
+          ],
+          [
+            -71.081404,
+            42.340278
+          ],
+          [
+            -71.080417,
+            42.339286
+          ],
+          [
+            -71.073516,
+            42.333501
+          ],
+          [
+            -71.070093,
+            42.335901
+          ],
+          [
+            -71.071966,
+            42.337497
+          ],
+          [
+            -71.073238,
+            42.33646
+          ],
+          [
+            -71.075074,
+            42.334978
+          ],
+          [
+            -71.080303,
+            42.339332
+          ],
+          [
+            -71.081313,
+            42.340329
+          ],
+          [
+            -71.081675,
+            42.34062
+          ],
+          [
+            -71.083549,
+            42.341931
+          ],
+          [
+            -71.083703,
+            42.341965
+          ],
+          [
+            -71.085777,
+            42.343372
+          ],
+          [
+            -71.085854,
+            42.343469
+          ],
+          [
+            -71.089468,
+            42.350866
+          ],
+          [
+            -71.0964,
+            42.34897
+          ],
+          [
+            -71.096932,
+            42.348941
+          ],
+          [
+            -71.097218,
+            42.348981
+          ],
+          [
+            -71.118522,
+            42.351542
+          ]
+        ],
+        "type": "LineString"
+      },
+      "id": "ef0af81ff10692cb011e33963b608dc9"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Huntington Ave."
+      },
+      "geometry": {
+        "coordinates": [
+          -71.084246,
+          42.342357
+        ],
+        "type": "Point"
+      },
+      "id": "efafd3fdd5206287228dac75484a8a5d"
+    }
+  ],
+  "type": "FeatureCollection"
+}
