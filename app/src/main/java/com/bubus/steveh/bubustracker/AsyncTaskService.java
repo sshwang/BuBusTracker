@@ -37,7 +37,6 @@ public class AsyncTaskService extends Service {
     private final Handler handler = new Handler();
     private ArrayList<Bus> busArray;
     Intent intent;
-    int counter = 0;
 
     public AsyncTaskService() {
 
@@ -84,10 +83,6 @@ public class AsyncTaskService extends Service {
             existingBuses = buses;
         }
 
-        public void setTestString(String testString) {
-            test = testString;
-        }
-
         protected ArrayList<Bus> doInBackground(String... rawJson) {
             ArrayList<Bus> busArray = new ArrayList<Bus>();
             try {
@@ -117,8 +112,7 @@ public class AsyncTaskService extends Service {
         @Override
         protected void onPostExecute(ArrayList<Bus> newBuses) {
             this.existingBuses = newBuses;
-            intent.putExtra("time", "from AsyncTaskService");
-            intent.putExtra("newBuses", newBuses);
+            intent.putExtra("numBuses", newBuses.size());
             intent.putExtra("existingBuses", newBuses);
             sendBroadcast(intent);
         }
@@ -138,7 +132,6 @@ public class AsyncTaskService extends Service {
                         Integer n = 0; // response should be here in successful
                         ParseBusInfo logic = new ParseBusInfo();
                         logic.setExistingBuses(busArray);
-                        logic.setTestString("HIIIIII");
                         logic.execute(response);
                         //new ParseBusInfo().execute(response);
                     }

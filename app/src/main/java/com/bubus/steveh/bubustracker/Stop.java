@@ -86,13 +86,13 @@ public class Stop implements Comparable<Stop>,Parcelable{
             s.estimatedArrivalDate = convertStringToDate(jsonObject.getString("arrival_at"));
             switch(iId){
                 case 4160718:
-                    s.stopName = "Huntington Ave Inbound";
+                    s.stopName = "Huntington Ave. Inbound";
                     break;
                 case 4160722:
-                    s.stopName = "Danielson Hall";
+                    s.stopName = "Danielson";
                     break;
                 case 4160726:
-                    s.stopName = "Myles Standish";
+                    s.stopName = "Myles";
                     break;
                 case 4160730:
                     s.stopName = "Silber Way";
@@ -107,22 +107,22 @@ public class Stop implements Comparable<Stop>,Parcelable{
                     s.stopName = "Stuvi 2";
                     break;
                 case 4114006:
-                    s.stopName = "Amory St";
+                    s.stopName = "Amory St.";
                     break;
                 case 4149154:
-                    s.stopName = "St Mary's St";
+                    s.stopName = "St. Mary's St.";
                     break;
                 case 4068466:
-                    s.stopName = "Blanford St";
+                    s.stopName = "Blanford St.";
                     break;
                 case 4068470:
                     s.stopName = "Kenmore";
                     break;
                 case 4110206:
-                    s.stopName = "Huntington Ave Outbound";
+                    s.stopName = "Huntington Ave. Outbound";
                     break;
                 case 4068482:
-                    s.stopName = "Albany St";
+                    s.stopName = "Albany St.";
                     break;
                 default:
                     s.stopName = "Unknown Stop";
