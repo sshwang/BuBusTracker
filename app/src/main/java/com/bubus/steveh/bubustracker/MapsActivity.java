@@ -72,7 +72,6 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
     private HashMap<Integer, Marker> busIDtoMarker = new HashMap<Integer, Marker>();
     private HashBiMap<Integer, Marker> busIDandMarkerHashBiMap = HashBiMap.create();
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 1;
-    private LatLngInterpolator mLatLngInterpolator;
     private MapView mapView;
     private MapboxMap mbMap;
     private DirectionsRoute currentRoute;
@@ -85,7 +84,6 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        mLatLngInterpolator = new LatLngInterpolator.Linear();
 
         intent = new Intent(this, AsyncTaskService.class);
 
@@ -237,7 +235,10 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
                 if (busIDtoMarker.containsKey(b.getId())) {
                     Marker existingMarker = busIDtoMarker.get(b.getId());
                     Icon icon = getIconForBus(b.getGeneralHeading());
-                    animateMarkerToICS(existingMarker, b.getLatLng(),mLatLngInterpolator);// get the marker and animate it
+                    ValueAnimator markerAnimator = ObjectAnimator.ofObject(existingMarker, "position",
+                            new LatLngEvaluator(), existingMarker.getPosition(), b.getLatLng());
+                    markerAnimator.setDuration(5000);
+                    markerAnimator.start();
                     existingMarker.setIcon(icon);
                     existingMarker.setTitle(b.getHasStops() ? b.getNextStop().getStopName() + ": " + getETA(b.getNextStop().getEstimatedArrivalDate()): "No Schedule Available");
                     existingMarker.setSnippet(b.getHasStops() ? b.getNextStop().getStopName() + ": " + getETA(b.getNextStop().getEstimatedArrivalDate())  : "No Schedule Available");
@@ -248,6 +249,19 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
                 }
 
             }
+        }
+    }
+
+    private static class LatLngEvaluator implements TypeEvaluator<LatLng> {
+
+        private LatLng latLng = new LatLng();
+        @Override
+        public LatLng evaluate(float fraction, LatLng startValue, LatLng endValue) {
+            latLng.setLatitude(startValue.getLatitude() +
+                    ((endValue.getLatitude() - startValue.getLatitude()) * fraction));
+            latLng.setLongitude(startValue.getLongitude() +
+                    ((endValue.getLongitude() - startValue.getLongitude()) * fraction));
+            return latLng;
         }
     }
 
