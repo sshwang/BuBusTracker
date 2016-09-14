@@ -39,14 +39,6 @@ import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
-import com.mapbox.services.Constants;
-import com.mapbox.services.commons.ServicesException;
-import com.mapbox.services.commons.geojson.LineString;
-import com.mapbox.services.commons.models.Position;
-import com.mapbox.services.directions.v4.DirectionsCriteria;
-import com.mapbox.services.directions.v4.models.DirectionsResponse;
-import com.mapbox.services.directions.v4.models.Waypoint;
-import com.mapbox.services.directions.v4.MapboxDirections;
 import com.mapbox.services.directions.v4.models.DirectionsRoute;
 
 
@@ -70,7 +62,6 @@ import java.util.List;
 public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChangeListener, MapboxMap.OnInfoWindowClickListener, OnMapReadyCallback{
     private HashMap<Integer, Bus> busIDtoBus = new HashMap<Integer, Bus>();
     private HashMap<Integer, Marker> busIDtoMarker = new HashMap<Integer, Marker>();
-    private HashBiMap<Integer, Marker> busIDandMarkerHashBiMap = HashBiMap.create();
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 1;
     private MapView mapView;
     private MapboxMap mbMap;
@@ -166,34 +157,7 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
     }
 
 
-    @Override
-    public boolean onInfoWindowClick(Marker marker) {
-        if (busIDandMarkerHashBiMap.containsValue(marker)) { // IF the marker is a bus
-            Integer busId = busIDandMarkerHashBiMap.inverse().get(marker);
-            Bus selectedBus = busIDtoBus.get(busId);
-
-            ArrayList<Stop> myStops = selectedBus.getStops();
-            if (myStops != null) {
-                Iterator<Stop> it = myStops.iterator();
-                String schedule = "";
-                Date now = new Date();
-                while (it.hasNext()) {
-                    Stop currentStop = it.next();
-                    schedule = schedule + getEAT(currentStop.getEstimatedArrivalDate()) + "    "+currentStop.getStopName() + "\n";
                 }
-                AlertDialog.Builder builder =
-                        new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle);
-                builder.setTitle(selectedBus.getBusType());
-                builder.setMessage(schedule);
-                builder.setPositiveButton("CLOSE", null);
-                builder.show();
-//                QustomDialogBuilder qustomDialogBuilder = new QustomDialogBuilder(this).
-//                        setTitle(selectedBus.getBusType()).
-//                        setTitleColor("#CC0000").
-//                        setDividerColor("#CC0000").
-//                        setMessage(schedule);
-//
-//                qustomDialogBuilder.show();
 
             }
 
@@ -213,7 +177,6 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
             ArrayList<Bus> newBuses =  intent.getExtras().getParcelableArrayList("newBuses");
             ArrayList<Bus> existingBuses =  intent.getExtras().getParcelableArrayList("existingBuses");
             animateExistingBus(existingBuses);
-            Integer n = 0;
         }
     };
 
@@ -297,147 +260,12 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
     }
 
 
-    private void parseBusInfo(String rawJson) {
-        ArrayList<Bus> busArray;
-        try {
-            JSONObject allData = new JSONObject(rawJson); // convert string to JSONObject
-            Integer totalResultsAvailable = Integer.parseInt(allData.getString("totalResultsAvailable"));
-            Integer isMissingResults = Integer.parseInt(allData.getString("isMissingResults"));
-            if (totalResultsAvailable == 0) {
-                Integer n = 0; //debug
-            } else if (isMissingResults == 1) {
-                Integer n = 0; // handle m
-            } else {
-                JSONObject resultSet = allData.getJSONObject("ResultSet");
-                JSONArray buses = resultSet.getJSONArray("Result");
-                Bus myBuses = new Bus();
-                busArray = myBuses.fromJsonArray(buses); // parsing done. busArray is array of Bus objects
-
-                for (Bus b: busArray) {
-                    Integer id = b.getId();
-                    Integer busGenHead = b.getGeneralHeading();
-                    String busIcon = "bus421" + busGenHead + "degrees";
-                    String minToArrival = "Unavailable";
-                    String nextStop = "Unavailable";
-                    if (b.getNextStop() != null) {
-                        Date estimatedArrivalDate = b.getNextStop().getEstimatedArrivalDate();
-                        minToArrival = getETA(estimatedArrivalDate);
-                        nextStop = b.getNextStop().getStopName();
-                    }
-
-                    Integer resId = getResources().getIdentifier(busIcon, "drawable", getPackageName());
-                    IconFactory iconFactory = IconFactory.getInstance(MapsActivity.this);
-
-                    if (!busIDtoBus.containsKey(id)) { // if this is a new bus
-                        busIDtoBus.put(id, b); // put into id to bus hashmap
-                        if (!busIDandMarkerHashBiMap.containsKey(id)) { // ensure there is also no marker for that bus id
-                            Drawable iconDrawable = ContextCompat.getDrawable(MapsActivity.this, resId);
-                            Icon icon = iconFactory.fromDrawable(iconDrawable);
-                            Marker m = mbMap.addMarker(new MarkerOptions()
-                                    .position(b.getLatLng())
-                                    .icon(icon)
-                                    .snippet(minToArrival)
-                                    .title(nextStop));
-                            busIDandMarkerHashBiMap.put(id, m); // create a marker, plot, and add it to the marker hashmap
-                        }
-                    }
-                    else { // if this bus already exists
-                        Drawable iconDrawable = ContextCompat.getDrawable(MapsActivity.this, resId);
-                        Icon icon = iconFactory.fromDrawable(iconDrawable);
-                        Marker oldM = busIDandMarkerHashBiMap.get(id);
-                        Marker m = mbMap.addMarker(new MarkerOptions()
-                                .position(oldM.getPosition())
-                                .icon(icon)
-                                .snippet(minToArrival)
-                                .title(nextStop));
-                        oldM.remove();
-                        busIDandMarkerHashBiMap.forcePut(id, m);
-                        animateMarkerToICS(busIDandMarkerHashBiMap.get(id), b.getLatLng(),mLatLngInterpolator);// get the marker and animate it
-                        busIDandMarkerHashBiMap.put(id, m);
-                    }
-                }
-                for (Bus b: busArray) {
-
-                }
-
-
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.activity_main_actions, menu); // Leftover menu from older version
         return super.onCreateOptionsMenu(menu);
     }
-
-
-
-    private void addBUStops() { // plot each BU stop
-        IconFactory iconFactory = IconFactory.getInstance(MapsActivity.this);
-        Drawable iconDrawable = ContextCompat.getDrawable(MapsActivity.this, R.drawable.bus_stop2);
-        Icon icon = iconFactory.fromDrawable(iconDrawable);
-
-        Marker MylesStandish = mbMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.349536,-71.094530))
-                .title("Myles Standish")
-                .icon(icon));
-        Marker SilberWay = mbMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.349453,-71.100748))
-                .title("Silber Way")
-                .icon(icon));
-        Marker MarshPlaza = mbMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.350181,-71.106085))
-                .title("Marsh Plaza")
-                .icon(icon));
-        Marker CFA = mbMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.351191,-71.114019))
-                .title("CFA")
-                .icon(icon));
-        Marker Stuvi2 = mbMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.351819,-71.118085))
-                .title("Stuvi 2")
-                .icon(icon));
-        Marker AmorySt = mbMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.350354,-71.113654))
-                .title("Amory St")
-                .icon(icon));
-        Marker StMarysSt = mbMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.349553,-71.106310))
-                .title("St Mary's St")
-                .icon(icon));
-        Marker BlanfordSt = mbMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.348802,-71.100170))
-                .title("Blanford St")
-                .icon(icon));
-        Marker Kenmore = mbMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.348585,-71.095490))
-                .title("Kenmore")
-                .icon(icon));
-        Marker AlbanySt = mbMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.335132,-71.070798))
-                .title("Albany St")
-                .icon(icon));
-        Marker HuntingtonAve1 = mbMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.342348,-71.084756))
-                .title("Huntington Ave Outbound")
-                .icon(icon));
-        Marker HuntingtonAve2 = mbMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.342336,-71.084150))
-                .title("Huntington Ave Inbound")
-                .icon(icon));
-        Marker DanielsonHall = mbMap.addMarker(new MarkerOptions()
-                .position(new LatLng(42.350876,-71.089718))
-                .title("Danielson Hall")
-                .icon(icon));
-
-    }
-
 
 
     private String getETA(Date estimatedArrivalDate){ //Estimated time to arrival
@@ -503,18 +331,5 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
                 return;
             }
         }
-    }
-
-    public void animateMarkerToICS(Marker marker, LatLng finalPosition, final LatLngInterpolator latLngInterpolator) {
-        TypeEvaluator<LatLng> typeEvaluator = new TypeEvaluator<LatLng>() {
-            @Override
-            public LatLng evaluate(float fraction, LatLng startValue, LatLng endValue) {
-                return latLngInterpolator.interpolate(fraction, startValue, endValue);
-            }
-        };
-        Property<Marker, LatLng> property = Property.of(Marker.class, LatLng.class, "position");
-        ObjectAnimator animator = ObjectAnimator.ofObject(marker, property, typeEvaluator, finalPosition);
-        animator.setDuration(3000);
-        animator.start();
     }
 }
