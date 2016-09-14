@@ -92,10 +92,10 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
         mbMap.setMyLocationEnabled(true);
         mbMap.setOnMyLocationChangeListener(this);
         mbMap.setOnInfoWindowClickListener(this);
-        new DrawGeoJSON().execute();
+        new DrawBusPath().execute();
+        new DrawBusStops().execute();
     }
 
-    private class DrawGeoJSON extends AsyncTask<Void, Void, List<LatLng>> {
         @Override
         protected List<LatLng> doInBackground(Void... voids) {
 
@@ -156,14 +156,73 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
         }
     }
 
+    private class DrawBusStops extends AsyncTask<Void, Void, HashMap<String, LatLng>> {
+        @Override
+        protected HashMap<String, LatLng> doInBackground(Void... voids) {
 
+            HashMap<String, LatLng> points = new HashMap<String, LatLng>();
+
+            try {
+                // Load GeoJSON file
+                InputStream inputStream = getAssets().open("features.geojson");
+                BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream, Charset.forName("UTF-8")));
+                StringBuilder sb = new StringBuilder();
+                int cp;
+                while ((cp = rd.read()) != -1) {
+                    sb.append((char) cp);
                 }
 
+                inputStream.close();
+
+                // Parse JSON
+                JSONObject json = new JSONObject(sb.toString());
+                JSONArray features = json.getJSONArray("features");
+                for (int i = 0; i < features.length(); i++) {
+                    JSONObject stop = features.getJSONObject(i);
+                    JSONObject point = stop.getJSONObject("geometry");
+                    JSONArray coords = point.getJSONArray("coordinates");
+                    //JSONArray coord = coords.getJSONArray(0);
+                    LatLng latLng = new LatLng(coords.getDouble(1), coords.getDouble(0));
+                    JSONObject properties = stop.getJSONObject("properties");
+                    String name = properties.getString("Name");
+                    stops.add(name);
+                    points.put(name,latLng);
+                }
+
+            } catch (Exception e) {
+                Log.e(TAG, "Exception Loading GeoJSON: " + e.toString());
             }
 
+            return points;
         }
         else { // IF the marker is a stop
 
+        @Override
+        protected void onPostExecute(HashMap<String, LatLng> points) {
+            super.onPostExecute(points);
+            IconFactory iconFactory = IconFactory.getInstance(MapsActivity.this);
+            Drawable iconDrawable = ContextCompat.getDrawable(MapsActivity.this, R.drawable.bus_stop2);
+            Icon icon = iconFactory.fromDrawable(iconDrawable);
+
+            if (points.size() > 0) {
+                Iterator it = points.entrySet().iterator();
+                while(it.hasNext()) {
+                    HashMap.Entry pair = (HashMap.Entry)it.next();
+                    String markerName = (String) pair.getKey();
+                    Marker marker = mbMap.addMarker(new MarkerOptions()
+                            .position((LatLng)pair.getValue())
+                            .title(markerName)
+                            .icon(icon));
+                    it.remove();
+                }
+//                LatLng[] pointsArray = points.toArray(new LatLng[points.size()]);
+//
+//                // Draw Points on MapView
+//                mbMap.addPolyline(new PolylineOptions()
+//                        .add(pointsArray)
+//                        .color(Color.parseColor("#3bb2d0"))
+//                        .width(2));
+            }
         }
         return true;
     }
@@ -332,4 +391,5 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
             }
         }
     }
+
 }
