@@ -3,6 +3,7 @@ package com.bubus.steveh.bubustracker;
 import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.animation.TypeEvaluator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -15,6 +16,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -41,8 +43,6 @@ import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.services.directions.v4.models.DirectionsRoute;
 
-
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
@@ -53,21 +53,25 @@ import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
 
-public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChangeListener, MapboxMap.OnInfoWindowClickListener, OnMapReadyCallback{
+public class MapsActivity extends Activity implements MapboxMap.OnMarkerClickListener, MapboxMap.OnMyLocationChangeListener, MapboxMap.OnInfoWindowClickListener, OnMapReadyCallback{
     private HashMap<Integer, Bus> busIDtoBus = new HashMap<Integer, Bus>();
     private HashMap<Integer, Marker> busIDtoMarker = new HashMap<Integer, Marker>();
+    private ArrayList<Bus> existingBuses = new ArrayList<Bus>();
+    private ArrayList<String> stops = new ArrayList<String>();
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 1;
     private MapView mapView;
     private MapboxMap mbMap;
     private DirectionsRoute currentRoute;
     private static final String TAG = "MainActivity";
     private Intent intent;
+    private Marker selectedStop;
 
 
     @Override
@@ -92,10 +96,57 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
         mbMap.setMyLocationEnabled(true);
         mbMap.setOnMyLocationChangeListener(this);
         mbMap.setOnInfoWindowClickListener(this);
+        mbMap.setOnMarkerClickListener(this);
         new DrawBusPath().execute();
         new DrawBusStops().execute();
     }
 
+    @Override
+    public boolean onMarkerClick(@NonNull Marker marker) {
+        if (stops.contains(marker.getTitle())) {
+            selectedStop = marker;
+            new GetStopEstimates().execute(marker.getTitle());
+        }
+        return false;
+    }
+
+
+    private class GetStopEstimates extends AsyncTask<String, Void, List<Date>> {
+        @Override
+        protected List<Date> doInBackground(String... stop) {
+            List<Date> points = new ArrayList<>();
+            if (existingBuses.size()>0) {
+                for (Bus b: existingBuses) {
+                    if (b.getHasStops()) {
+                        ArrayList<Stop> stops = b.getStops();
+                        for (Stop s: stops) {
+                            String stopName = s.getStopName();
+                            if (stopName == stop[0]) {
+                                //points.add(s.getStopName() + ": " + s.getEstimatedArrival());
+                                points.add(s.getEstimatedArrivalDate());
+                            }
+                        }
+                    }
+
+                }
+            }
+            Collections.sort(points, Collections.reverseOrder());
+
+            return points;
+        }
+
+        @Override
+        protected void onPostExecute(List<Date> points) {
+            super.onPostExecute(points);
+            if (points.size() > 0) {
+                selectedStop.setSnippet("Schedule Available");
+            } else {
+                selectedStop.setSnippet("No Schedule Available");
+            }
+        }
+    }
+
+    private class DrawBusPath extends AsyncTask<Void, Void, List<LatLng>> {
         @Override
         protected List<LatLng> doInBackground(Void... voids) {
 
@@ -133,6 +184,8 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
                         }
                     }
                 }
+
+
             } catch (Exception e) {
                 Log.e(TAG, "Exception Loading GeoJSON: " + e.toString());
             }
@@ -195,7 +248,6 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
 
             return points;
         }
-        else { // IF the marker is a stop
 
         @Override
         protected void onPostExecute(HashMap<String, LatLng> points) {
@@ -224,6 +276,34 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
 //                        .width(2));
             }
         }
+    }
+
+    @Override
+    public boolean onInfoWindowClick(Marker marker) {
+//        if (busIDandMarkerHashBiMap.containsValue(marker)) { // IF the marker is a bus
+//            Integer busId = busIDandMarkerHashBiMap.inverse().get(marker);
+//            Bus selectedBus = busIDtoBus.get(busId);
+//
+//            ArrayList<Stop> myStops = selectedBus.getStops();
+//            if (myStops != null) {
+//                Iterator<Stop> it = myStops.iterator();
+//                String schedule = "";
+//                Date now = new Date();
+//                while (it.hasNext()) {
+//                    Stop currentStop = it.next();
+//                    schedule = schedule + getEAT(currentStop.getEstimatedArrivalDate()) + "    "+currentStop.getStopName() + "\n";
+//                }
+//                AlertDialog.Builder builder =
+//                        new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle);
+//                builder.setTitle(selectedBus.getBusType());
+//                builder.setMessage(schedule);
+//                builder.setPositiveButton("CLOSE", null);
+//                builder.show();
+//            }
+//        }
+//        else { // IF the marker is a stop
+//
+//        }
         return true;
     }
 
@@ -232,9 +312,9 @@ public class MapsActivity extends Activity implements MapboxMap.OnMyLocationChan
         public void onReceive(Context context, Intent intent) {
             //updateUI(intent);
 //            String counter = intent.getStringExtra("counter");
-            String time = intent.getStringExtra("time");
-            ArrayList<Bus> newBuses =  intent.getExtras().getParcelableArrayList("newBuses");
-            ArrayList<Bus> existingBuses =  intent.getExtras().getParcelableArrayList("existingBuses");
+            Integer numBuses = intent.getIntExtra("numBuses", 0);
+            existingBuses =  intent.getExtras().getParcelableArrayList("existingBuses");
+            getActionBar().setTitle(numBuses + " Buses");
             animateExistingBus(existingBuses);
         }
     };
