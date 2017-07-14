@@ -8,8 +8,8 @@ android {
         applicationId "com.bubus.steveh.bubustracker"
         minSdkVersion 16
         targetSdkVersion 23
-        versionCode 15
-        versionName "1.52"
+        versionCode 17
+        versionName "2.01"
     }
     buildTypes {
         release {

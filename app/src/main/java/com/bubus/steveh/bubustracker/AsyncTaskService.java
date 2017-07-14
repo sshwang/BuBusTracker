@@ -111,10 +111,12 @@ public class AsyncTaskService extends Service {
 
         @Override
         protected void onPostExecute(ArrayList<Bus> newBuses) {
-            this.existingBuses = newBuses;
-            intent.putExtra("numBuses", newBuses.size());
-            intent.putExtra("existingBuses", newBuses);
-            sendBroadcast(intent);
+            if (newBuses != null) {
+                this.existingBuses = newBuses;
+                intent.putExtra("numBuses", newBuses.size());
+                intent.putExtra("existingBuses", newBuses);
+                sendBroadcast(intent);
+            }
         }
     }
 
