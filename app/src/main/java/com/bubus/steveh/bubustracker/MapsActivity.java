@@ -97,7 +97,8 @@ public class MapsActivity extends Activity implements MapboxMap.OnMarkerClickLis
         mbMap.setOnMyLocationChangeListener(this);
         mbMap.setOnInfoWindowClickListener(this);
         mbMap.setOnMarkerClickListener(this);
-        new DrawBusPath().execute();
+        new DrawBusPath().execute("buspath.geojson");
+        new DrawBusPath().execute("cabuspath.geojson");
         new DrawBusStops().execute();
     }
 
@@ -146,15 +147,18 @@ public class MapsActivity extends Activity implements MapboxMap.OnMarkerClickLis
         }
     }
 
-    private class DrawBusPath extends AsyncTask<Void, Void, List<LatLng>> {
+    private class DrawBusPath extends AsyncTask<String, Void, List<LatLng>> {
+        private String color;
+
         @Override
-        protected List<LatLng> doInBackground(Void... voids) {
+        protected List<LatLng> doInBackground(String... strings) {
 
             ArrayList<LatLng> points = new ArrayList<>();
 
             try {
                 // Load GeoJSON file
-                InputStream inputStream = getAssets().open("buspath.geojson");
+                InputStream inputStream = getAssets().open(strings[0]);
+                color = strings[0].equals("buspath.geojson") ? "#3bb2d0" : "#0BC227";
                 BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream, Charset.forName("UTF-8")));
                 StringBuilder sb = new StringBuilder();
                 int cp;
@@ -203,7 +207,7 @@ public class MapsActivity extends Activity implements MapboxMap.OnMarkerClickLis
                 // Draw Points on MapView
                 mbMap.addPolyline(new PolylineOptions()
                         .add(pointsArray)
-                        .color(Color.parseColor("#3bb2d0"))
+                        .color(Color.parseColor(color))
                         .width(2));
             }
         }
