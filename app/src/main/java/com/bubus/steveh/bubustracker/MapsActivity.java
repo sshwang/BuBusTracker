@@ -140,9 +140,9 @@ public class MapsActivity extends Activity implements MapboxMap.OnMarkerClickLis
         protected void onPostExecute(List<Date> points) {
             super.onPostExecute(points);
             if (points.size() > 0) {
-                selectedStop.setSnippet("Schedule Available");
+                //selectedStop.setSnippet("Schedule Available");
             } else {
-                selectedStop.setSnippet("No Schedule Available");
+                //selectedStop.setSnippet("No Schedule Available"); // TODO: handle setting schedule for each stop
             }
         }
     }

@@ -72,7 +72,14 @@ public class Bus implements Parcelable {
             b.lat = jsonObject.getDouble("lat");
             b.timestamp = jsonObject.getString("timestamp");
             b.generalHeading = jsonObject.getInt("general_heading");
-            b.route = jsonObject.getString("route");
+
+            String rawRoute = jsonObject.getString("route");
+            b.route = rawRoute;
+            if (rawRoute.equals("caloop")) {
+                b.route = "Comm Ave Loop";
+            } else if (rawRoute.equals("weekday")) {
+                b.route = "Weekday";
+            }
             if (jsonObject.has("arrival_estimates")) {
                 JSONArray stops = jsonObject.getJSONArray("arrival_estimates");
                 ArrayList myStopArray = s.fromJsonArray(stops);
