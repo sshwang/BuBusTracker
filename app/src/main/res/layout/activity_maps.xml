@@ -12,6 +12,8 @@
         android:layout_height="match_parent"
         mapbox:access_token="pk.eyJ1Ijoic2h3YW5nIiwiYSI6ImNpb2E1NXdzNDAzOW92Z2txeHo0aXprdDcifQ.KjGHeefesn5zWFZsLgu7Rg"
         mapbox:style_url="mapbox://styles/mapbox/streets-v9"
-        mapbox:zoom="11"/>
+        mapbox:center_latitude="42.350"
+        mapbox:center_longitude="-71.105"
+        mapbox:zoom="13"/>
 
 </RelativeLayout>
