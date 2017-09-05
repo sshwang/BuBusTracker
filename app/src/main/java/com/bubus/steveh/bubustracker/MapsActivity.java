@@ -284,6 +284,7 @@ public class MapsActivity extends Activity implements MapboxMap.OnMarkerClickLis
 
     @Override
     public boolean onInfoWindowClick(Marker marker) {
+        Integer n = 0;
 //        if (busIDandMarkerHashBiMap.containsValue(marker)) { // IF the marker is a bus
 //            Integer busId = busIDandMarkerHashBiMap.inverse().get(marker);
 //            Bus selectedBus = busIDtoBus.get(busId);
@@ -330,7 +331,7 @@ public class MapsActivity extends Activity implements MapboxMap.OnMarkerClickLis
                         .position(bus.getLatLng())
                         .icon(icon)
                         .title(bus.getHasStops() ? bus.getNextStop().getStopName() + ": " + getETA(bus.getNextStop().getEstimatedArrivalDate()) : "No Schedule Available")
-                        .snippet(bus.getHasStops() ? bus.getNextStop().getStopName() + ": " + getETA(bus.getNextStop().getEstimatedArrivalDate()) : "No Schedule Available"));
+                        .snippet(!bus.getRoute().isEmpty() ? "Route: " +bus.getRoute() : "No Route Available"));
                 busIDtoMarker.put(bus.getId(), m);
         }
     }
@@ -347,7 +348,7 @@ public class MapsActivity extends Activity implements MapboxMap.OnMarkerClickLis
                     markerAnimator.start();
                     existingMarker.setIcon(icon);
                     existingMarker.setTitle(b.getHasStops() ? b.getNextStop().getStopName() + ": " + getETA(b.getNextStop().getEstimatedArrivalDate()): "No Schedule Available");
-                    existingMarker.setSnippet(b.getHasStops() ? b.getNextStop().getStopName() + ": " + getETA(b.getNextStop().getEstimatedArrivalDate())  : "No Schedule Available");
+                    existingMarker.setSnippet(!b.getRoute().isEmpty() ? "Route: " + b.getRoute() : "No Route Available");
                     busIDtoMarker.put(b.getId(), existingMarker);
                 }
                 else {

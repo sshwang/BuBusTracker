@@ -29,6 +29,7 @@ public class Bus implements Parcelable {
     private String BusType;
     private Boolean hasStops = false;
     private Marker busMarker;
+    private String route;
 
     public Integer getId() {
         return id;
@@ -57,6 +58,7 @@ public class Bus implements Parcelable {
             return null;
         }
     }
+    public String getRoute() {return this.route;}
     public String getBusType() {return  this.BusType; }
     public Boolean getHasStops() {return this.hasStops;}
 
@@ -70,6 +72,7 @@ public class Bus implements Parcelable {
             b.lat = jsonObject.getDouble("lat");
             b.timestamp = jsonObject.getString("timestamp");
             b.generalHeading = jsonObject.getInt("general_heading");
+            b.route = jsonObject.getString("route");
             if (jsonObject.has("arrival_estimates")) {
                 JSONArray stops = jsonObject.getJSONArray("arrival_estimates");
                 ArrayList myStopArray = s.fromJsonArray(stops);
@@ -125,6 +128,7 @@ public class Bus implements Parcelable {
         dest.writeDouble(this.lng);
         dest.writeDouble(this.lat);
         dest.writeString(this.timestamp);
+        dest.writeString(this.route);
         dest.writeTypedList(stops);
         dest.writeByte((byte) (this.hasStops ? 1 : 0));
     }
@@ -139,6 +143,7 @@ public class Bus implements Parcelable {
         this.lng = in.readDouble();
         this.lat = in.readDouble();
         this.timestamp = in.readString();
+        this.route = in.readString();
         this.stops = new ArrayList<>();
         in.readTypedList(stops, Stop.CREATOR);
         this.hasStops = in.readByte() != 0;
